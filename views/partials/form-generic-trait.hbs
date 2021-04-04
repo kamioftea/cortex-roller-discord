@@ -1,0 +1,32 @@
+<div class="grid-x grid-margin-x" {{#if (not-null index)}}data-index="{{ index }}"{{/if}} data-template-remove-target>
+    <div class="cell small-{{default labelWidth 7}}">
+        <label>
+            Label
+            <input name="{{ baseName }}{{#if (not-null index)}}[{{ index }}]{{/if}}[label]" value="{{label}}" type="text">
+        </label>
+    </div>
+    <div class="cell small-{{default dieWidth 4}}">
+        <label>
+            Die
+            <select name="{{ baseName }}{{#if (not-null index)}}[{{ index }}]{{/if}}[die]">
+                {{#if includeEmptyDie }}
+                    <option value="">-- Not Set --</option>
+                {{/if}}
+                {{options dice selected=die}}
+            </select>
+        </label>
+    </div>
+    <div class="cell small-{{default buttonWidth 1}} align-form text-right">
+        <a class="button alert small" href="#" data-template-remove>
+            <i class="far fa-trash"></i>
+        </a>
+    </div>
+    {{#if includeDescription}}
+        <div class="cell small-12">
+            <label>
+                Description
+                <textarea class="markdown" name="{{ baseName }}{{#if (not-null index)}}[{{ index }}]{{/if}}[description]">{{~description~}}</textarea>
+            </label>
+        </div>
+    {{/if}}
+</div>

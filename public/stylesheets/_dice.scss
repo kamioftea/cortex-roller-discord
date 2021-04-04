@@ -1,0 +1,82 @@
+@import 'settings';
+
+.die {
+  vertical-align: middle;
+  margin: 0 2px;
+
+  &.medium {
+    width: 3em;
+    height: 3em;
+  }
+
+  &.small {
+    width: 1.6em;
+    height: 1.6em;
+  }
+
+  &.large {
+    width: 5em;
+    height: 5em;
+  }
+}
+
+.die.unrolled {
+  path {
+    fill: #14B1E7;
+  }
+
+  text {
+    fill: $white;
+  }
+}
+
+.die.effect {
+  path {
+    fill: #2D5931;
+  }
+
+  text {
+    fill: $white;
+  }
+}
+
+.die.selected {
+  path {
+    fill: $white;
+    stroke: #14B1E7;
+    stroke-width: 2;
+  }
+
+  text {
+    fill: $black;
+  }
+}
+
+.die.ignored {
+  path {
+    fill: #424C59;
+  }
+
+  text {
+    fill: #82939F;
+  }
+}
+
+.die.hitch {
+  path {
+    fill: $black;
+    stroke: #14B1E7;
+    stroke-width: 2;
+  }
+
+  text {
+    fill: $white;
+  }
+}
+
+.dice-divider {
+  font-size: 2.5em;
+  line-height: 1;
+  vertical-align: middle;
+  margin: 0 0.5em;
+}

@@ -1,0 +1,43 @@
+<div class="grid-container">
+    <h1 class="text-primary">Users</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Roles</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#each users }}
+                <tr>
+                    <td>
+                        {{ name }}
+                    </td>
+                    <td>
+                        {{ email }}
+                    </td>
+                    <td>
+                        {{#each roles}}
+                            <span class="label primary">{{.}}</span>
+                        {{/each}}
+                    </td>
+                    <td>
+                        {{#each actions }}
+                            {{#if get }}
+                                <a href="{{ get }}" class="button tiny {{ color }}">{{ label }}</a>
+                            {{/if}}
+                            {{#if post}}
+                                <form action="{{ post }}" method="post" class="inline">
+                                    <button type="submit"
+                                            class="button tiny {{ color }}">{{ label }}</button>
+                                </form>
+                            {{/if}}
+                        {{/each}}
+                    </td>
+                </tr>
+            {{/each}}
+        </tbody>
+    </table>
+</div>

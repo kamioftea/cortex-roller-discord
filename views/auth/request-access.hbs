@@ -1,0 +1,34 @@
+<div class="splash-page">
+    <div class="content">
+        <form action="/user/request-access" method="post">
+            {{#if message }}
+                <div class="callout alert">
+                    <p>{{ message }}</p>
+                </div>
+            {{/if}}
+
+            <h1 class="text-primary medium-text-right">Request an Account</h1>
+            <label>
+                Name:
+                <input name="name" type="text"/>
+            </label>
+            <label>
+                Email:
+                <input name="email" type="text"/>
+            </label>
+            <label>
+                Password:
+                <input name="password" type="password"/>
+            </label>
+            <label>
+                Retype Password:
+                <input name="password_check" type="password"/>
+            </label>
+            <label class="text-right">
+                <button class="button primary">
+                    Send Request
+                </button>
+            </label>
+        </form>
+    </div>
+</div>

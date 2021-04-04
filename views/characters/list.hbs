@@ -1,0 +1,55 @@
+<div class="grid-container">
+    <div class="grid-x grid-margin-x">
+        <div class="cell auto align-self-middle">
+            <h1 class="text-primary">Characters</h1>
+        </div>
+        <div class="cell  auto align-self-middle text-right">
+            <a href="{{ base_url }}/add" class="button success">
+                <i class="far fa-plus"></i>
+                Add Character
+            </a>
+        </div>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>Thumb</th>
+                <th>Name</th>
+                <th style="width: 40%">Player</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#each characters }}
+                <tr>
+                    <td>
+                        {{#if (default icon_url image_url) }}
+                            <img alt="{{ name }} Thumbnail" src="{{ default icon_url image_url }}" style="height:48px;"/>
+                        {{else}}
+                            -
+                        {{/if}}
+                    </td>
+                    <td>
+                        {{ name }}
+                    </td>
+                    <td>
+                        <label>
+                            Player
+                            <select name="player_id"
+                                    data-update-url="{{ ../base_url }}/set-player/{{ _id }}">
+                                <option value="">-- No Player Assigned --</option>
+                                {{options ../users value='_id' label='name' selected=_player_id}}
+                            </select>
+                        </label>
+                    </td>
+                    <td>
+                        <a href="{{ ../base_url }}/edit/{{_id}}" class="button primary small">
+                            <i class="far fa-pencil"></i>
+                            Edit
+                        </a>
+                    </td>
+                </tr>
+            {{/each}}
+        </tbody>
+    </table>
+</div>

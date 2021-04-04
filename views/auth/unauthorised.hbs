@@ -1,0 +1,43 @@
+<div class="splash-page">
+    <div class="content">
+        <img src="/images/tox-logo.png" alt="Tales of Xadia Logo">
+        <h1 class="text-center">Dice Roller</h1>
+        <p>
+            <a href="/authorise" class="button expanded discord">
+                <i class="fab fa-discord"></i>
+                Authorise with Discord
+            </a>
+        </p>
+        <form action="/user/login" method="post">
+            <input type="hidden" name="redirect_url" value="{{ redirect_url }}">
+
+            <div class="grid-x grid-margin-x">
+                <div class="cell small-12 medium-5">
+                    <label>
+                        Email:
+                        <input name="email" type="text"/>
+                    </label>
+                </div>
+                <div class="cell small-12 medium-5">
+                    <label>
+                        Password:
+                        <input name="password" type="password"/>
+                    </label>
+                </div>
+                <div class="cell small-12 medium-2">
+                    <label>
+                        &nbsp;
+                        <button class="button expanded primary">
+                            Login
+                        </button>
+                    </label>
+                </div>
+            </div>
+
+        </form>
+        <br>
+        <a href="/user/request-access">
+            Request Account ...
+        </a>
+    </div>
+</div>

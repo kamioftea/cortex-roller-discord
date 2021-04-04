@@ -1,0 +1,323 @@
+<form method="post"
+      action="{{ base_url }}{{#if character }}/edit/{{character._id}}{{else}}/add{{/if}}">
+    <div class="grid-container">
+        <div class="sticky">
+            <div class="grid-x">
+                <div class="cell small-8">
+                    <h1 class="text-primary">
+                        {{#if character }}
+                            Edit Character: {{ character.name }}
+                        {{else}}
+                            Add Character
+                        {{/if}}
+                    </h1>
+                </div>
+                <div class="cell small-4 text-right align-self-middle">
+                    <label class="text-right">
+                        <button class="button success">
+                            Save
+                        </button>
+                    </label>
+                </div>
+            </div>
+        </div>
+        <div class="grid-x grid-margin-x">
+            <div class="cell small-12 medium-4">
+                <label>
+                    Name
+                    <input name="name" type="text" value="{{ character.name }}"/>
+                </label>
+                <label>
+                    Description
+                    <textarea name="description" class="markdown" style="height: 30vh">
+                        {{~ character.description ~}}
+                    </textarea>
+                </label>
+                <label>
+                    Icon Url
+                    <input name="icon_url" type="url" value="{{ character.icon_url }}"/>
+                </label>
+                <div class="image-upload-container"
+                     data-image-upload
+                     data-image-upload-source="icon"
+                     data-image-upload-trigger="icon_trigger"
+                     data-image-upload-target="[name=icon_url]"
+                     data-image-upload-clear="icon_clear"
+                     data-image-upload-url="/image-upload"
+                     data-image-upload-prefix="{{ url_prefix }}"
+                >
+                    <label for="icon"
+                           id="icon_url_trigger"
+                           class="button">
+                        <i class="far fa-cloud-upload"></i>
+                        Upload File
+                    </label>
+                    <input type="file"
+                           id="icon"
+                           class="show-for-sr"
+                    />
+                    <button class="button alert" id="icon_clear">
+                        <i class="far fa-times"></i>
+                        Clear Image
+                    </button>
+                </div>
+                <label>
+                    Image Url
+                    <input name="image_url" type="url" value="{{ character.image_url }}"/>
+                </label>
+                <div class="image-upload-container"
+                     data-image-upload
+                     data-image-upload-source="image"
+                     data-image-upload-trigger="image_trigger"
+                     data-image-upload-target="[name=image_url]"
+                     data-image-upload-clear="image_clear"
+                     data-image-upload-url="/image-upload"
+                     data-image-upload-prefix="{{ url_prefix }}"
+                >
+                    <label for="image"
+                           id="image_url_trigger"
+                           class="button">
+                        <i class="far fa-cloud-upload"></i>
+                        Upload File
+                    </label>
+                    <input type="file"
+                           id="image"
+                           class="show-for-sr"
+                    />
+                    <button class="button alert" id="image_clear">
+                        <i class="far fa-times"></i>
+                        Clear Image
+                    </button>
+                </div>
+            </div>
+            <div class="cell small-12 medium-8">
+                <fieldset>
+                    <legend>Attributes</legend>
+                    <div class="grid-x grid-margin-x">
+                        {{#each attributes}}
+                            <div class="cell small-6 medium-4">
+                                <label>
+                                    {{titleCase this}}
+                                    <select name="attributes[{{ this }}][die]">
+                                        <option value="">-- Not Set --</option>
+                                        {{options ../dice
+                                                  selected=(lookup (lookup ../character/attributes this) 'die') }}
+                                    </select>
+                                </label>
+                            </div>
+                        {{/each}}
+                    </div>
+                </fieldset>
+                <div class="grid-x grid-margin-x">
+                    <div class="cell small-12 medium-4">
+                        <fieldset>
+                            <legend>Catalyst</legend>
+                            <label>
+                                Die
+                                <select name="catalyst_die">
+                                    <option value="">-- Not Set --</option>
+                                    {{options dice selected=character.catalyst_die }}
+                                </select>
+                            </label>
+                        </fieldset>
+                    </div>
+                    <div class="cell small-12 medium-8">
+                        <fieldset>
+                            <legend>Miscellaneous</legend>
+                            <div id="misc-container">
+                                {{#each character.misc}}
+                                    {{>form_generic_trait
+                                            baseName="misc"
+                                            index=@index
+                                            dice=../dice
+                                            label=label
+                                            die=die
+                                            dieWidth=3
+                                            buttonWidth=2
+                                    }}
+                                {{/each}}
+                            </div>
+                            <div class="text-right margin-bottom-1">
+                                <a class="button success small"
+                                   href="#"
+                                   data-template='misc-trait'
+                                   data-target="misc-container"
+                                   data-base-name="misc"
+                                >
+                                    <i class="far fa-plus"></i>
+                                    Add Miscellaneous Trait
+                                </a>
+                            </div>
+                        </fieldset>
+                    </div>
+                </div>
+                <fieldset>
+                    <legend>Values</legend>
+                    <div class="grid-x grid-margin-x">
+                        {{#each values}}
+                            <div class="cell small-4">
+                                <label>
+                                    {{titleCase this}}
+                                    <select name="values[{{ this }}][die]">
+                                        <option value="">-- Not Set --</option>
+                                        {{options ../dice
+                                                  selected=(lookup (lookup ../character/values this) 'die') }}
+                                    </select>
+                                </label>
+                            </div>
+                            <div class="cell small-8">
+                                <label>
+                                    Statement
+                                    <input name="values[{{this}}][description]"
+                                           type="text"
+                                           value="{{lookup (lookup ../character/values this)
+                                                           'description'}}">
+                                </label>
+                            </div>
+                        {{/each}}
+                    </div>
+                </fieldset>
+                <fieldset>
+                    <legend>Distinctions</legend>
+                    <div class="grid-x grid-margin-x">
+                        {{#each distinctions}}
+                            <input name="distinctions[{{this}}][die]" type="hidden" value="8">
+                            <div class="cell small-10">
+                                <label>
+                                    {{titleCase this}}
+                                    <input name="distinctions[{{ this }}][label]"
+                                           type="text"
+                                           value="{{lookup (lookup ../character/distinctions this)
+                                                           'label'}}">
+
+                                </label>
+                            </div>
+                            <div class="cell small-2 text-right align-form">
+                                <a class="button success small"
+                                   href="#"
+                                   data-template='sfx'
+                                   data-target="{{ this }}-sfx-container"
+                                   data-base-name="distinctions[{{ this }}][sfx]"
+                                >
+                                    <i class="far fa-plus"></i>
+                                    Add SFX
+                                </a>
+                            </div>
+                            <div class="cell small-12" id="{{ this }}-sfx-container">
+                                {{#each (lookup (lookup ../character/distinctions this) 'sfx')}}
+                                    <div class="grid-x grid-margin-x" data-index="{{ @index }}">
+                                        <div class="cell small-4">
+                                            <label>
+                                                SFX
+                                                <input name="distinctions[{{ ../this }}][sfx][{{ @index }}][label]"
+                                                       type="text"
+                                                       value="{{ label }}"
+                                                >
+                                            </label>
+                                        </div>
+                                        <div class="cell small-7 ">
+                                            <label>
+                                                Description
+                                                <input name="distinctions[{{ ../this }}][sfx][{{ @index }}][description]"
+                                                       type="text"
+                                                       value="{{ description }}"
+                                                >
+                                            </label>
+                                        </div>
+                                        <div class="cell small-1 align-form">
+                                            <a class="button alert small" href="#"
+                                               data-template-remove>
+                                                <i class="far fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                {{/each}}
+                            </div>
+                        {{/each}}
+                    </div>
+                </fieldset>
+                <fieldset>
+                    <legend>Specialities</legend>
+                    <div id="specialities-container">
+                        {{#each character.specialities}}
+                            {{>form_generic_trait
+                                    baseName="specialities"
+                                    index=@index
+                                    dice=../dice
+                                    label=label
+                                    die=die
+                                    description=description
+                                    includeDescription=true
+                            }}
+                        {{/each}}
+                    </div>
+                    <div class="text-right margin-bottom-1">
+                        <a class="button success small"
+                           href="#"
+                           data-template='generic-trait'
+                           data-target="specialities-container"
+                           data-base-name="specialities"
+                        >
+                            <i class="far fa-plus"></i>
+                            Add Speciality
+                        </a>
+                    </div>
+                </fieldset>
+                <fieldset>
+                    <legend>Signature Asset</legend>
+                    {{~>form_generic_trait
+                            baseName="signature_asset"
+                            dice=dice
+                            includeEmptyDie=true
+                            label=character.signature_asset.label
+                            die=character.signature_asset.die
+                            description=character.signature_asset.description
+                            includeDescription=true
+                    ~}}
+                </fieldset>
+            </div>
+        </div>
+    </div>
+</form>
+
+<template id="generic-trait">
+    {{>form_generic_trait
+            baseName="__baseName__"
+            index="__index__"
+            dice=dice die=6
+            includeDescription=true
+    }}
+</template>
+
+<template id="misc-trait">
+    {{>form_generic_trait
+            baseName="__baseName__"
+            index="__index__"
+            dice=dice
+            die=6
+            dieWidth=3
+            buttonWidth=2
+    }}
+</template>
+
+<template id="sfx">
+    <div class="grid-x grid-margin-x" data-index="__index__" data-template-remove-target>
+        <div class="cell small-4">
+            <label>
+                SFX
+                <input name="__baseName__[__index__][label]" type="text">
+            </label>
+        </div>
+        <div class="cell small-7">
+            <label>
+                Description
+                <input name="__baseName__[__index__][description]" type="text">
+            </label>
+        </div>
+        <div class="cell small-1 align-form">
+            <a class="button alert small" href="#" data-template-remove>
+                <i class="far fa-trash"></i>
+            </a>
+        </div>
+    </div>
+</template>

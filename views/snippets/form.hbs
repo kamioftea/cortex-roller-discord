@@ -1,0 +1,83 @@
+<form method="post" action="{{ base_url }}{{#if snippet }}/edit/{{snippet._id}}{{else}}/add{{/if}}">
+    <div class="grid-container">
+        <h1 class="text-primary">
+            {{#if snippet }}
+                Edit Snippet: {{ snippet.title }}
+            {{else}}
+                Add Snippet
+            {{/if}}
+        </h1>
+        <div class="grid-x grid-margin-x">
+            <div class="cell small-12 medium-4">
+                <label>
+                    Title
+                    <input name="title" type="text" value="{{ snippet.title }}"/>
+                </label>
+                <label>
+                    Image Url
+                    <input name="image_url" type="text" value="{{ snippet.image_url }}"/>
+                </label>
+                <div class="image-upload-container"
+                     data-image-upload
+                     data-image-upload-source="image"
+                     data-image-upload-trigger="image_trigger"
+                     data-image-upload-target="[name=image_url]"
+                     data-image-upload-clear="image_clear"
+                     data-image-upload-url="/image-upload"
+                >
+                    <label for="image"
+                           id="image_trigger"
+                           class="button">
+                        <i class="far fa-cloud-upload"></i>
+                        Upload File
+                    </label>
+                    <input type="file"
+                           id="image"
+                           class="show-for-sr"
+                    />
+                    <button class="button alert" id="image_clear">
+                        <i class="far fa-times"></i>
+                        Clear Image
+                    </button>
+                </div>
+                <label>
+                    Image Position
+                    <select name="image_position">
+                        <option value="">Full</option>
+                        {{options positions selected=snippet.image_position}}
+                    </select>
+                </label>
+                <label>
+                    Image Width
+                    <input name="image_width" type="text" value="{{ snippet.image_width }}"/>
+                </label>
+                <label>
+                    Text Style
+                    <select name="text_style">
+                        {{options textStyles selected=snippet.text_style}}
+                    </select>
+                </label>
+            </div>
+            <div class="cell small-12 medium-8">
+                <label>
+                    Description
+                    <!--suppress CssOverwrittenProperties -->
+                    <textarea class="markdown" name="description" style="height: 32rem; height: calc(30vh + 23.4rem)">
+                        {{~ snippet.description ~}}
+                    </textarea>
+                </label>
+            </div>
+            <div class="cell small-12 medium-12">
+                <label class="text-right">
+                    <button class="button primary">
+                        {{#if snippet }}
+                            Edit Snippet
+                        {{else}}
+                            Add Snippet
+                        {{/if}}
+                    </button>
+                </label>
+            </div>
+        </div>
+    </div>
+</form>

@@ -1,0 +1,27 @@
+<div class="splash-page">
+    <div class="content">
+        <form action="/user/access-key/{{access_key}}" method="post">
+            {{#if message }}
+                <div class="callout alert">
+                    <p>{{ message }}</p>
+                </div>
+            {{/if}}
+
+            <h1 class="text-primary medium-text-right">Set Password</h1>
+            <p class="lead">Set a new password for {{ user.name }} &lt;{{ user.email }}&gt;</p>
+            <label>
+                Password:
+                <input name="password" type="password"/>
+            </label>
+            <label>
+                Retype Password:
+                <input name="password_check" type="password"/>
+            </label>
+            <label class="text-right">
+                <button class="button primary">
+                    Set Password
+                </button>
+            </label>
+        </form>
+    </div>
+</div>

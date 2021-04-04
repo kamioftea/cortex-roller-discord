@@ -1,0 +1,17 @@
+# Project exclude paths
+/node_modules/
+/.idea
+cortex-roller-discord.iml
+/res/fontawesome
+docker-compose*
+/conf
+.npmrc
+.rnd
+
+# data
+/public/images/upload
+
+# Gemerated files
+/public/stylesheets/*.css
+/public/javascripts/webpack-*
+*.map

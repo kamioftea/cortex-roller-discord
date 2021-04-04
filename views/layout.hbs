@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+    <title>{{title}} - Cortex Roller</title>
+    <meta charset="utf-8"/>
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=IM+Fell+Great+Primer&family=IM+Fell+Great+Primer+SC&family=Lato&display=swap" rel="stylesheet"/>
+    <link rel='stylesheet' href='/stylesheets/style.css'/>
+    {{#each styles}}
+        <link rel='stylesheet' href='{{.}}'/>
+    {{/each}}
+    <link rel="icon" href="/favicon.png"/>
+</head>
+<body>
+    {{#with topbar }}
+        <div class="top-bar">
+            <div class="top-bar-left">
+                <ul class="dropdown menu" data-dropdown-menu>
+                    <li class="menu-text">
+                        <a href="/">Cortex Roller</a>
+                    </li>
+                    {{#each actions}}
+                        <li>
+                            <a href="{{ url }}">{{ label }}</a>
+                        </li>
+                    {{/each}}
+                </ul>
+            </div>
+            <div class="top-bar-right">
+                <ul class="dropdown menu" data-dropdown-menu>
+                    <li class="menu-text">
+                        Logged in as {{ user.name }}
+                    </li>
+                    <li>
+                        <a href="/user/logout">Logout</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    {{/with}}
+    {{#with message }}
+        <div class="grid-container" >
+            <div class="callout {{ severity }}" data-closable="">
+                <button class="close-button" aria-label="Close alert" type="button" data-close>
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                {{ text }}
+            </div>
+        </div>
+    {{/with}}
+    {{{body}}}
+
+    <script src="/js/jquery.min.js"></script> <!-- Required -->
+    <script src="/js/foundation.core.min.js"></script>  <!-- Required -->
+    <script src="/js/foundation.util.keyboard.min.js"></script>
+    <script src="/js/foundation.util.box.min.js"></script>
+    <script src="/js/foundation.util.nest.min.js"></script>
+    <script src="/js/foundation.util.motion.min.js"></script>
+    <script src="/js/foundation.util.touch.min.js"></script>
+    <script src="/js/foundation.util.triggers.min.js"></script>
+    <script src="/js/foundation.dropdownMenu.min.js"></script>
+    {{#each scripts}}
+        <script src="{{.}}"></script>
+    {{/each}}
+    <script>
+        $(() => $(document).foundation())
+    </script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+<div class="grid-container">
+    <a href="{{ base_url }}/add" class="button success float-right">
+        <i class="far fa-plus"></i>
+        Add Snippet
+    </a>
+    <h1 class="text-primary">Snippets</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Image</th>
+                <th>Name</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#each snippets }}
+                <tr>
+                    <td>
+                        {{#if image_url }}
+                            <img alt="{{ title }} Thumbnail" src="{{ image_url }}" style="height:64px;"/>
+                        {{else}}
+                            -
+                        {{/if}}
+                    </td>
+                    <td>
+                        {{ title }}
+                    </td>
+                    <td>
+                        <a href="{{ ../base_url }}/edit/{{_id}}" class="button primary small">
+                            <i class="far fa-pencil"></i>
+                            Edit
+                        </a>
+                        {{#if active}}
+                            <form method="post" action="{{ ../base_url }}/clear-active" style="display: inline-block">
+                                <button type="submit" class="button alert small">Clear Active</button>
+                            </form>
+                        {{ else }}
+                            <form method="post" action="{{ ../base_url }}/set-active/{{ _id }}" style="display: inline-block">
+                                <button type="submit" class="button success small">Set Active</button>
+                            </form>
+                        {{/if}}
+                    </td>
+                </tr>
+            {{/each}}
+        </tbody>
+    </table>
+</div>
