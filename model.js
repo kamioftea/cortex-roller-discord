@@ -24,6 +24,28 @@ function registerEpic(epic) {
     }
 }
 
+
+function registerAsyncEpic(epic) {
+    const eventualResult = epic(message$);
+
+    let resultSubscription = null;
+
+    eventualResult.then(result$ => {
+        if (!result$ instanceof Observable) {
+            console.error('Expected epic to return an Observable')
+        }
+
+        resultSubscription = result$.subscribe(msg => message$.next(msg));
+    });
+
+    return {
+        unsubscribe() {
+            console.log('unsubscribing');
+            resultSubscription && resultSubscription.unsubscribe();
+        }
+    }
+}
+
 function dispatch(msg) {
     message$.next(msg)
 }
@@ -202,4 +224,4 @@ registerEpic(msg$ =>
     )
 )
 
-module.exports = {registerEpic, dispatch};
+module.exports = {registerEpic, registerAsyncEpic, dispatch};

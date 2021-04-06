@@ -1,4 +1,8 @@
 import React from "react";
+import {Parser, HtmlRenderer} from 'commonmark'
+
+const parser = new Parser({smart: true});
+const renderer = new HtmlRenderer({});
 
 export const preventDefault = fn => (e => {
     e.preventDefault();
@@ -34,4 +38,8 @@ export class Dropdown extends React.PureComponent {
             {dropdown}
         </div>
     }
+}
+
+export function renderMarkdown(str) {
+    return renderer.render(parser.parse(str))
 }

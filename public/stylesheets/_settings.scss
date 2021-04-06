@@ -68,8 +68,8 @@ $body-background: #f7f2e7;
 $body-font-color: #222222;
 $body-font-family: 'Lato', Helvetica, Roboto, Arial, sans-serif;
 $body-antialiased: true;
-$global-margin: 1rem;
-$global-padding: 1rem;
+$global-margin: 0.5rem;
+$global-padding: 0.5rem;
 $global-weight-normal: normal;
 $global-weight-bold: bold;
 $global-radius: 0;
@@ -103,6 +103,7 @@ $grid-column-gutter: (
         small: 20px,
         medium: 30px,
 );
+$grid-margin-gutters: 1.25rem;
 $grid-column-align-edge: true;
 $block-grid-max: 8;
 
@@ -139,7 +140,7 @@ $header-text-rendering: optimizeLegibility;
 $small-font-size: 80%;
 $header-small-font-color: $medium-gray;
 $paragraph-lineheight: 1.6;
-$paragraph-margin-bottom: 1rem;
+$paragraph-margin-bottom: 0.5rem;
 $paragraph-text-rendering: optimizeLegibility;
 $code-color: $black;
 $code-font-family: $font-family-monospace;

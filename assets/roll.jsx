@@ -3,7 +3,6 @@ import {connect} from "react-redux";
 import {List, Map, Record} from 'immutable';
 import {Dice, Die, DisplaySize, Mode} from './dice';
 import {Dropdown, preventDefault} from './util.jsx';
-import {setCurrentCharacter} from './character';
 
 const ADD_DIE = Symbol('add-die');
 const REMOVE_DIE = Symbol('remove-die');
@@ -112,30 +111,14 @@ export const rollResultsReducer = (state = new Map(), action) => {
 export const Roller = connect(
     ({currentRoll, rollResults, user, characters, currentCharacter}) =>
         ({currentRoll, rollResults, user, characters, currentCharacter}),
-    {addDie, removeDie, resetDice, rollDice, clearResult, setCurrentCharacter}
+    {addDie, removeDie, resetDice, rollDice, clearResult}
 )(({
        currentRoll, rollResults, user, characters, currentCharacter,
-       addDie, removeDie, resetDice, rollDice, clearResult, setCurrentCharacter
+       addDie, removeDie, resetDice, rollDice, clearResult
    }) => {
         const rollResult = user != null && rollResults.has(user._id)
             ? rollResults.get(user._id)
             : null;
-
-        const characterOptions =
-            Object.fromEntries(characters.map(character =>
-                [
-                    character.name,
-                    <div onClick={() => setCurrentCharacter(character)} style={{cursor: 'pointer'}}>
-                        <h3>{character.name}{' '}
-                            {character.icon_url
-                                ? <img src={character.icon_url} style={{height: '2.5rem'}}
-                                       alt={character.name + ' icon'}/>
-                                : null
-                            }
-                        </h3>
-                    </div>
-                ]
-            ))
 
         if (!currentCharacter) {
             if (characters.size === 0) {

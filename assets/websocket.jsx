@@ -5,7 +5,7 @@ import {CLEAR_RESULT, handleDiceRolled, resultCleared, ROLL_DICE} from './roll';
 import {TRIGGER_SCENE_CHANGE} from './sceneChange';
 import {ofType} from 'redux-observable';
 import {setUser} from './user';
-import {setCharacterPlayer, setCharacters} from './character';
+import {ALTER_PLOT_POINTS, ALTER_STRESS, setCharacterPlayer, setCharacters} from './character';
 import {setSnippet} from './snippet';
 
 const RECONNECT_DELAY_MS = 5000;
@@ -24,6 +24,8 @@ const sendSocketTypes = {
     [TRIGGER_SCENE_CHANGE]: 'trigger-scene-change',
     [PONG]:                 'pong',
     [CLEAR_RESULT]:         'clear-result',
+    [ALTER_PLOT_POINTS]:    'alter-plot-points',
+    [ALTER_STRESS]:         'alter-stress',
 };
 
 const recvSocketTypes = {

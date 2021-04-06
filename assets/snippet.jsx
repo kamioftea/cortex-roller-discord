@@ -1,10 +1,7 @@
 import React from "react";
 import {connect} from "react-redux";
 import {Record} from 'immutable';
-import {Parser, HtmlRenderer} from 'commonmark'
-
-const parser = new Parser({smart: true});
-const renderer = new HtmlRenderer({});
+import {renderMarkdown} from './util';
 
 const SET_SNIPPET = Symbol('set-snippet')
 
@@ -50,7 +47,7 @@ export const ShowSnippet = connect(({snippet}) => ({snippet}), {})
         {snippet.description
             ? <div className={snippet.text_style || 'description-medium'}
                    dangerouslySetInnerHTML={{
-                       __html: renderer.render(parser.parse(snippet.description))
+                       __html: renderMarkdown(snippet.description)
                    }}/>
             : null
         }

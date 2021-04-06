@@ -140,7 +140,6 @@ router.post(
         res.redirect(req.baseUrl)
 
         const snippet = await db.collection('snippets').findOne({_id});
-        console.log('hi', snippet);
         if (snippet.active) {
             dispatch({type: 'set-active-snippet', snippet});
         }

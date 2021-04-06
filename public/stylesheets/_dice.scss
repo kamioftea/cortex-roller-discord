@@ -3,20 +3,21 @@
 .die {
   vertical-align: middle;
   margin: 0 2px;
+  font-family: $body-font-family;
 
   &.medium {
-    width: 3em;
-    height: 3em;
+    width: 3rem;
+    height: 3rem;
   }
 
   &.small {
-    width: 1.6em;
-    height: 1.6em;
+    width: 1.6rem;
+    height: 1.6rem;
   }
 
   &.large {
-    width: 5em;
-    height: 5em;
+    width: 5rem;
+    height: 5rem;
   }
 }
 
@@ -72,6 +73,16 @@
   text {
     fill: $white;
   }
+}
+
+.die.plot-point {
+  path {
+    fill: #141c27;
+  }
+  path:first-child {
+    fill: #d2952a;
+  }
+  color: #141c27;
 }
 
 .dice-divider {

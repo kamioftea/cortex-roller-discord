@@ -24,15 +24,27 @@ const charactersRouter = require('./routes/characters');
 const snippetsRouter = require('./routes/snippets');
 const usersRouter = require('./routes/users');
 
-const fromClientTypes = ['trigger-scene-change', 'roll-dice', 'clear-result']
-const toClientTypes = ['dice-rolled', 'set-characters', 'set-character-player', 'result-cleared', 'set-active-snippet']
+const fromClientTypes = [
+    'trigger-scene-change',
+    'roll-dice',
+    'clear-result',
+    'alter-stress',
+    'alter-plot-points'
+];
+const toClientTypes = [
+    'dice-rolled',
+    'set-characters',
+    'set-character-player',
+    'result-cleared',
+    'set-active-snippet'
+];
 
 module.exports = app => {
 
     app.use(favicon(path.join(__dirname, 'public', 'favicon.png')));
     app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 
-    hbs.registerPartials(path.join(__dirname,'views','partials'));
+    hbs.registerPartials(path.join(__dirname, 'views', 'partials'));
 
     glob(path.join(__dirname, 'helpers') + '/**/*.js')
         .then(files =>

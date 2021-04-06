@@ -1,10 +1,13 @@
+const {ofType} = require('redux-observable');
+const {mergeMap}= require('rxjs/operators');
+
 const express = require('express');
 const router = express.Router();
 const {ObjectId} = require('mongodb');
 const {eventualDb} = require('../db-conn.js');
 const {writeMessage} = require('../flashMessage.js');
 const {authenticated} = require('../authenticateRequest');
-const {dispatch} = require('../model');
+const {dispatch, registerAsyncEpic} = require('../model');
 const {addScript, filterObject} = require('../util');
 
 const dice = [
@@ -31,9 +34,9 @@ router.get('/', async function (req, res) {
     const db = await eventualDb;
     const characters = await db.collection('characters').find().sort({name: 1}).toArray();
     const users = await db.collection('users')
-        .find({roles: 'Player'})
-        .sort({name: 1})
-        .toArray();
+                          .find({roles: 'Player'})
+                          .sort({name: 1})
+                          .toArray();
     const userOptions = [...users].map(
         ({_id, name, discordProfile}) => ({_id, name: name || discordProfile.username})
     );
@@ -81,6 +84,7 @@ router.post(
             image_url,
             attributes,
             catalyst_die,
+            misc,
             values,
             distinctions,
             specialities,
@@ -89,18 +93,21 @@ router.post(
 
         if (name) {
             const db = await eventualDb;
+            let filteredAttributes = filterObject(attributes, a => a.die);
             await db.collection('characters').insertOne({
                 name,
                 description,
                 icon_url,
                 image_url,
-                attributes:      filterObject(attributes, a => a.die),
+                attributes:      filteredAttributes,
                 catalyst_die:    catalyst_die || null,
+                misc,
                 values:          filterObject(values, v => v.die),
                 distinctions:    filterObject(distinctions, d => d.label),
                 specialities,
                 signature_asset: signature_asset.die ? signature_asset : null,
-
+                plot_points:     catalyst_die || filteredAttributes ? 1 : 0,
+                stress:          {},
             })
             res.redirect(req.baseUrl)
         }
@@ -159,6 +166,7 @@ router.post(
             image_url,
             attributes,
             catalyst_die,
+            misc,
             values,
             distinctions,
             specialities,
@@ -168,30 +176,35 @@ router.post(
         if (name) {
             const db = await eventualDb;
             await db.collection('characters')
-                .updateOne(
-                    {_id},
-                    {
-                        $set: {
-                            name,
-                            description,
-                            icon_url,
-                            image_url,
-                            attributes:      filterObject(attributes, a => a.die),
-                            catalyst_die:    catalyst_die || null,
-                            values:          filterObject(values, v => v.die),
-                            distinctions:    filterObject(distinctions, d => d.label),
-                            specialities,
-                            signature_asset: signature_asset.die ? signature_asset : null,
+                    .updateOne(
+                        {_id},
+                        {
+                            $set: {
+                                name,
+                                description,
+                                icon_url,
+                                image_url,
+                                attributes:      filterObject(attributes, a => a.die),
+                                catalyst_die:    catalyst_die || null,
+                                misc:            misc,
+                                values:          filterObject(values, v => v.die),
+                                distinctions:    filterObject(distinctions, d => d.label),
+                                specialities,
+                                signature_asset: signature_asset.die ? signature_asset : null,
+                            }
                         }
-                    }
-                )
+                    )
             res.redirect(req.baseUrl)
+
+            const character = await db.collection('characters').findOne({_id});
+            if (character && character._player_id) {
+                dispatch({type: 'set-character-player', user_id: character._player_id, character})
+            }
         }
         else {
             writeMessage(req, 'Name must be provided', 'alert');
             res.redirect(req.originalUrl)
         }
-
     }
 )
 
@@ -224,3 +237,54 @@ router.post(
 )
 
 module.exports = router;
+
+registerAsyncEpic(async msg$ => {
+    const db = await eventualDb;
+
+    return msg$.pipe(
+        ofType('alter-plot-points'),
+        mergeMap(async ({character_id, delta}) => {
+            const _id = ObjectId(character_id);
+            const character = await db.collection('characters').findOne({_id});
+            if (!character) {
+                return null;
+            }
+
+            character.plot_points = Math.max(0, (character.plot_points || 0) + delta);
+
+            await db.collection('characters')
+                    .updateOne({_id}, {$set: {plot_points: character.plot_points}});
+
+            return {type: 'set-character-player', user_id: character._player_id, character}
+        })
+    )
+});
+
+registerAsyncEpic(async msg$ => {
+    const db = await eventualDb;
+
+    return msg$.pipe(
+        ofType('alter-stress'),
+        mergeMap(async ({character_id, stress_type, delta}) => {
+            const _id = ObjectId(character_id);
+            const character = await db.collection('characters').findOne({_id});
+            if (!character) {
+                return null;
+            }
+
+            if(!character.stress) {
+                character.stress = {};
+            }
+
+            character.stress[stress_type] = Math.min((character.stress[stress_type] || 4) + (delta * 2), 12);
+            if(character.stress[stress_type] < 6) {
+                delete character.stress[stress_type];
+            }
+
+            await db.collection('characters')
+                    .updateOne({_id}, {$set: {stress: character.stress}});
+
+            return {type: 'set-character-player', user_id: character._player_id, character}
+        })
+    )
+});

@@ -17,8 +17,7 @@ module.exports = {
         ];
     },
     filterObject(obj, predicate) {
-        return Object.fromEntries(
-            Object.entries(obj).filter(([k, v]) => predicate(v, k))
-        )
+        let entries = Object.entries(obj || {}).filter(([k, v]) => predicate(v, k));
+        return entries.length > 0 ? Object.fromEntries(entries) : null;
     }
 }
