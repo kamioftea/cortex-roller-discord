@@ -3,7 +3,7 @@ import {Rolls} from './roll';
 import {SceneChange} from './sceneChange';
 import {ShowSnippet} from './snippet';
 import {CharacterSelect, CharacterSheet, Description, Trackers} from './character';
-import {DiceBlock} from './dice';
+import {DiceBlock} from './roll';
 
 export const Layout = () =>
     <div className="grid-container full wrapper-container">
@@ -25,8 +25,8 @@ export const Layout = () =>
                 <CharacterSheet/>
             </div>
             <div className="cell small-12 large-5 snippet-container">
-                <ShowSnippet/>
                 <Rolls/>
+                <ShowSnippet/>
             </div>
         </div>
     </div>

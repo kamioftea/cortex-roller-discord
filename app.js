@@ -26,16 +26,19 @@ const usersRouter = require('./routes/users');
 
 const fromClientTypes = [
     'trigger-scene-change',
+    'set-dice',
     'roll-dice',
-    'clear-result',
+    'update-result',
+    'clear-roll',
     'alter-stress',
-    'alter-plot-points'
+    'alter-plot-points',
 ];
 const toClientTypes = [
+    'roll-updated',
     'dice-rolled',
     'set-characters',
     'set-character-player',
-    'result-cleared',
+    'roll-cleared',
     'set-active-snippet'
 ];
 
@@ -112,7 +115,8 @@ module.exports = app => {
 
             const resultSubscription = registerEpic((msg$) => {
                 actionSubscription =
-                    msg$.pipe(ofType(...toClientTypes))
+                    msg$.pipe(
+                        ofType(...toClientTypes))
                         .subscribe(
                             (msg) => {
                                 if (msg._for != null && !msg._for.includes(user._id)) {
@@ -121,7 +125,7 @@ module.exports = app => {
                                 try {
                                     ws.send(JSON.stringify(msg))
                                 } catch (ignored) {
-                                    console.log(msg, ignored)
+                                    console.log('Error sending message', msg, ignored)
                                 }
                             }
                         );

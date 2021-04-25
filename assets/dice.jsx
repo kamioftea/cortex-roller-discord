@@ -1,6 +1,5 @@
 import React from "react";
-import {connect} from "react-redux";
-import {preventDefault} from './util.jsx';
+import {preventDefault} from './util';
 
 export const Mode = {
     UNROLLED: 'unrolled',
@@ -131,24 +130,11 @@ function getDieData(sides) {
                               <rect width="26" height="26" fill="white"/>
                           </clipPath>
                 },
-                text:    {x: 12.9, y: 18.3},
-                noText: true,
+                text:     {x: 12.9, y: 18.3},
+                noText:   true,
             }
     }
 }
-
-export const DiceBlock = connect(({}) => ({}), {})(({}) =>
-    <fieldset>
-        <legend>Additional Dice</legend>
-        <div className="grid-x grid-margin-x small-up-5">
-        <div className="cell"><Die sides={Dice.D4} displaySize={DisplaySize.MEDIUM} /></div>
-        <div className="cell"><Die sides={Dice.D6} displaySize={DisplaySize.MEDIUM} /></div>
-        <div className="cell"><Die sides={Dice.D8} displaySize={DisplaySize.MEDIUM} /></div>
-        <div className="cell"><Die sides={Dice.D10} displaySize={DisplaySize.MEDIUM} /></div>
-        <div className="cell"><Die sides={Dice.D12} displaySize={DisplaySize.MEDIUM} /></div>
-    </div>
-    </fieldset>
-)
 
 function getLabel(mode, sides, value) {
     switch (mode) {

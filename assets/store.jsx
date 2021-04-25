@@ -1,7 +1,7 @@
 import {createEpicMiddleware, combineEpics} from "redux-observable";
 import {applyMiddleware, combineReducers, createStore} from "redux";
 import {EMPTY} from "rxjs";
-import {currentRollReducer, rollResultsReducer} from './roll';
+import {rollsReducer} from './roll';
 import {webSocketEpic, websocketPingResponseEpic} from './websocket';
 import {userReducer} from './user';
 import {characterPlayerEpic, charactersReducer, currentCharacterReducer} from './character';
@@ -9,8 +9,7 @@ import {snippetReducer} from './snippet';
 
 const rootReducer = combineReducers(
     {
-        currentRoll:      currentRollReducer,
-        rollResults:      rollResultsReducer,
+        rolls:            rollsReducer,
         user:             userReducer,
         characters:       charactersReducer,
         currentCharacter: currentCharacterReducer,

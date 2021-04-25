@@ -6,6 +6,7 @@ import {map, withLatestFrom} from 'rxjs/operators';
 import {Dropdown, preventDefault, renderMarkdown} from './util';
 import titleCase from '../helpers/titleCase'
 import {Dice, Die, DisplaySize} from './dice';
+import {setDice} from './roll';
 
 const SET_CHARACTERS = Symbol('set-characters');
 const SET_CHARACTER_PLAYER = Symbol('set-character-player');
@@ -159,11 +160,10 @@ export const Trackers = connect(
                 <legend>Plot Points</legend>
                 <div className="grid-y grid-padding-y">
                     <div className="cell">
-                        <button
-                            className={`button primary expanded ${character.plot_points ? '' : 'disabled'}`}
-                            onClick={preventDefault(() => character.plot_points ? alterPlotPoints(character._id, -1) : null)}
+                        <button className="button primary expanded"
+                                onClick={preventDefault(() => alterPlotPoints(character._id, +1))}
                         >
-                            <i className="far fa-minus"/>
+                            <i className="far fa-plus"/>
                         </button>
                     </div>
                     <div className="cell text-center">
@@ -172,10 +172,11 @@ export const Trackers = connect(
                              value={character.plot_points || '0'}/>
                     </div>
                     <div className="cell">
-                        <button className="button primary expanded"
-                                onClick={preventDefault(() => alterPlotPoints(character._id, +1))}
+                        <button
+                            className={`button primary expanded ${character.plot_points ? '' : 'disabled'}`}
+                            onClick={preventDefault(() => character.plot_points ? alterPlotPoints(character._id, -1) : null)}
                         >
-                            <i className="far fa-plus"/>
+                            <i className="far fa-minus"/>
                         </button>
                     </div>
                 </div>
@@ -220,50 +221,80 @@ export const Trackers = connect(
 })
 
 export const CharacterSheet = connect(
-    ({currentCharacter}) => ({character: currentCharacter}),
-    {}
-)(({character}) => {
+    ({currentCharacter, rolls}) => ({character: currentCharacter, rolls}),
+    {setDice}
+)(({character, rolls, setDice}) => {
     if (!character) {
         return null;
     }
+
+    const dicePool = rolls.get(character._id)?.dice_pool || {};
 
     const attributes = character.attributes
         ? <fieldset>
             <legend>Attributes</legend>
             <div className="grid-x grid-margin-x">
-                {Object.entries(character.attributes).map(([attribute, {die}]) =>
-                    <div className="cell small-4 clickable" key={attribute}>
-                        <div className="grid-x grid-margin-x align-middle">
-                            <div className='cell auto'>
-                                <h4>{titleCase(attribute)}</h4>
+                {Object.entries(character.attributes).map(([attribute, {die}]) => {
+                        const label = titleCase(attribute);
+                        const selected = dicePool.attribute && dicePool.attribute.label === label;
+                        return <div className={`cell small-4 clickable ${selected ? 'selected' : ''}`}
+                                    key={attribute}
+                                    onClick={preventDefault(() => setDice(
+                                        character._id,
+                                        'attribute',
+                                        label,
+                                        selected ? null : [parseInt(die)],
+                                        1
+                                    ))}
+                        >
+                            <div className="grid-x grid-margin-x align-middle">
+                                <div className='cell auto'>
+                                    <h4>{label}</h4>
+                                </div>
+                                <div className="cell shrink">
+                                    <Die sides={parseInt(die)} displaySize={DisplaySize.SMALL}/>
+                                </div>
                             </div>
-                            <div className="cell shrink">
-                                <Die sides={parseInt(die)} displaySize={DisplaySize.SMALL}/>
-                            </div>
-                        </div>
-                    </div>
+                        </div>;
+                    }
                 )}
             </div>
         </fieldset>
         : null;
 
     const narrator_trait_array = [
-        ...character.catalyst_die ? [['Catalyst', character.catalyst_die]] : [],
-        ...(character.misc || []).map(({label, die}) => [label, die])
+        ...character.catalyst_die ? [['catalyst', 'Catalyst', character.catalyst_die, 2]] : [],
+        ...(character.misc || []).map(({label, die}) => [
+            'misc_' + label.toLowerCase().replaceAll(/[^a-z0-9]+/g, '_'),
+            label,
+            die,
+            3
+        ])
     ];
 
     const narrator_traits = narrator_trait_array.length > 0
         ? <fieldset>
             <legend>Narrator Traits</legend>
-            {narrator_trait_array.map(([trait, die]) =>
-                <div className="grid-x grid-margin-x align-middle clickable" key={trait}>
-                    <div className='cell auto'>
-                        <h4>{trait}</h4>
-                    </div>
-                    <div className="cell shrink">
-                        <Die sides={parseInt(die)} displaySize={DisplaySize.SMALL}/>
-                    </div>
-                </div>
+            {narrator_trait_array.map(([key, trait, die, order]) => {
+                    const selected = dicePool[key] != null;
+                    return <div
+                        className={`grid-x grid-margin-x align-middle clickable ${selected ? 'selected' : ''}`}
+                        onClick={preventDefault(() => setDice(
+                            character._id,
+                            key,
+                            trait,
+                            selected ? null : [parseInt(die)],
+                            order
+                        ))}
+                        key={key}>
+                        <div className='cell auto'>
+                            <h4>{trait}</h4>
+                        </div>
+                        <div className="cell shrink">
+                            <Die sides={parseInt(die)} displaySize={DisplaySize.SMALL}/>
+                        </div>
+                    </div>;
+                }
             )}
 
         </fieldset>
@@ -277,11 +308,21 @@ export const CharacterSheet = connect(
             <div className="grid-x grid-margin-x">
                 {valuesOrder.map((value) => {
                         const {die, description} = character.values[value];
+                        const label = titleCase(value);
+                        const selected = dicePool.value && dicePool.value.label === label;
 
-                        return <div className="cell small-6 clickable" key={value}>
+                        return <div className={`cell small-6 clickable ${selected ? 'selected' : ''}`}
+                                    key={value}
+                                    onClick={preventDefault(() => setDice(
+                                        character._id,
+                                        'value',
+                                        label,
+                                        selected ? null : [parseInt(die)],
+                                        4
+                                    ))}>
                             <div className="grid-x grid-margin-x align-middle">
                                 <div className='cell auto'>
-                                    <h4>{titleCase(value)}</h4>
+                                    <h4>{label}</h4>
                                 </div>
                                 <div className="cell shrink">
                                     <Die sides={parseInt(die)} displaySize={DisplaySize.SMALL}/>
@@ -328,6 +369,16 @@ export const CharacterSheet = connect(
 
     const hinder = {
         label:       'Hinder',
+        selected:    label => dicePool.distinction && dicePool.distinction.label === `${label} (Hindered)`,
+        onClick:     label => {
+            return setDice(
+                character._id,
+                'distinction',
+                `${label} (Hindered)`,
+                dicePool.distinction && dicePool.distinction.label === `${label} (Hindered)` ? null : [Dice.D4],
+                5
+            );
+        },
         description: 'Gain one [PP] when you switch out this distinction’s die rating for a [D4]'
     }
 
@@ -335,26 +386,54 @@ export const CharacterSheet = connect(
         ? <fieldset>
             <legend>Distinctions</legend>
             <div>
-                {Object.entries(character.distinctions).map(([distinction, {label, sfx = []}]) =>
-                    <div key={distinction}>
-                        <div className="clickable">
-                            <div className="grid-x grid-margin-x align-middle">
-                                <div className='cell auto'>
-                                    <h4>{label}</h4>
-                                </div>
-                                <div className="cell shrink">
-                                    <Die sides={Dice.D8} displaySize={DisplaySize.SMALL}/>
+                {Object.entries(character.distinctions).map(([distinction, {label, sfx = []}]) => {
+                        const selected = dicePool.distinction?.label === label;
+
+                        return <div key={distinction}>
+                            <div className={`clickable ${selected ? 'selected' : ''}`}
+                                 onClick={preventDefault(() => {
+                                     console.log('hi');
+                                     return setDice(
+                                         character._id,
+                                         'distinction',
+                                         label,
+                                         selected ? null : [Dice.D8],
+                                         5
+                                     );
+                                 })}
+                            >
+                                <div className="grid-x grid-margin-x align-middle">
+                                    <div className='cell auto'>
+                                        <h4>{label}</h4>
+                                    </div>
+                                    <div className="cell shrink">
+                                        <Die sides={Dice.D8} displaySize={DisplaySize.SMALL}/>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <ul>
-                            {[hinder, ...sfx].map(({label, description}, index) =>
-                                <li key={index}>
-                                    <em>{label}</em>: {renderSFX(description)}
-                                </li>)
-                            }
-                        </ul>
-                    </div>
+                            <ul>
+                                {[hinder, ...sfx].map(
+                                    ({
+                                         label: sfxLabel,
+                                         description,
+                                         onClick,
+                                         selected
+                                     }, index
+                                    ) =>
+                                        <li key={index}
+                                            {...(typeof onClick === 'function'
+                                                ? {
+                                                    onClick:   preventDefault(() => onClick(label)),
+                                                    className: `clickable ${selected(label) ? 'selected' : ''}`
+                                                }
+                                                : {})}
+                                        >
+                                            <em>{sfxLabel}</em>: {renderSFX(description)}
+                                        </li>
+                                )}
+                            </ul>
+                        </div>;
+                    }
                 )}
             </div>
         </fieldset>
@@ -364,33 +443,54 @@ export const CharacterSheet = connect(
         ? <fieldset>
             <legend>Specialities</legend>
             {character.specialities.map(({label, die, description}, index) =>
-                <div key={index} className='clickable'>
-                    <div className="grid-x grid-margin-x align-middle">
-                        <div className='cell auto'>
-                            <h4>{label}</h4>
-                        </div>
-                        <div className="cell shrink">
-                            <Die sides={parseInt(die)} displaySize={DisplaySize.SMALL}/>
-                        </div>
-                        {description
-                            ? <div className="cell large-12">
-                                <span className='trait-statement'>
-                                    {description}
-                                </span>
+                {
+                    const selected = dicePool.speciality && dicePool.speciality.label === label;
+                    return <div key={index}
+                                className={`clickable ${selected ? 'selected' : ''}`}
+                                onClick={preventDefault(() => setDice(
+                                    character._id,
+                                    'speciality',
+                                    label,
+                                    selected ? null : [parseInt(die)],
+                                    7
+                                ))}>
+                        <div className="grid-x grid-margin-x align-middle">
+                            <div className='cell auto'>
+                                <h4>{label}</h4>
                             </div>
-                            : null
-                        }
-                    </div>
-                </div>
+                            <div className="cell shrink">
+                                <Die sides={parseInt(die)} displaySize={DisplaySize.SMALL}/>
+                            </div>
+                            {description
+                                ? <div className="cell large-12">
+                                    <span className='trait-statement'>
+                                        {description}
+                                    </span>
+                                </div>
+                                : null
+                            }
+                        </div>
+                    </div>;
+                }
             )}
         </fieldset>
         : null
+
+    const assetSelected = dicePool && dicePool.signature_asset;
 
     const signature_asset = character.signature_asset
         ? <div className={`cell small-${distinctions && specialities ? '6' : '12'}`}>
             <fieldset>
                 <legend>Signature Asset</legend>
-                <div className="grid-x clickable">
+                <div className={`grid-x clickable ${assetSelected ? 'selected' : ''}`}
+                onClick={preventDefault(() => setDice(
+                    character._id,
+                    'signature_asset',
+                    character.signature_asset.label,
+                    assetSelected ? null : [parseInt(character.signature_asset.die)],
+                    8
+                ))}
+                >
                     <div className='cell auto'>
                         <h4>{character.signature_asset.label}</h4>
                     </div>

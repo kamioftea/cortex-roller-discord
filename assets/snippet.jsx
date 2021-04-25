@@ -35,7 +35,7 @@ export const ShowSnippet = connect(({snippet}) => ({snippet}), {})
         return null;
     }
 
-    return <div className='fade-in' key={snippet.title}>
+    return <div className='fade-in margin-top-1' key={snippet.title}>
         {snippet.image_url
             ? <img src={snippet.image_url}
                    style={{width: snippet.image_width || '100%'}}

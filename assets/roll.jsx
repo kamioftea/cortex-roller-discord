@@ -1,349 +1,414 @@
 import React from "react";
 import {connect} from "react-redux";
-import {List, Map, Record} from 'immutable';
+import {Map, Record} from 'immutable';
 import {Dice, Die, DisplaySize, Mode} from './dice';
-import {Dropdown, preventDefault} from './util.jsx';
+import {Dropdown, Position, preventDefault} from './util.jsx';
 
-const ADD_DIE = Symbol('add-die');
-const REMOVE_DIE = Symbol('remove-die');
-const RESET_DICE = Symbol('reset-dice');
-const ADD_RESOURCE = Symbol('add-resource');
-const REMOVE_RESOURCE = Symbol('remove-resource');
+export const SET_DICE = Symbol('set-dice');
 export const ROLL_DICE = Symbol('roll-dice');
-const DICE_ROLLED = Symbol('dice-rolled');
-export const CLEAR_RESULT = Symbol('clear-result');
-const RESULT_CLEARED = Symbol('result-cleared');
+export const UPDATE_RESULT = Symbol('update-result');
+const ROLL_UPDATED = Symbol('roll-updated');
+export const CLEAR_ROLL = Symbol('clear-roll');
+const ROLL_CLEARED = Symbol('roll-cleared');
 
-const addDie = (sides) => ({type: ADD_DIE, sides});
-const removeDie = (index) => ({type: REMOVE_DIE, index});
-const resetDice = () => ({type: RESET_DICE});
-// noinspection JSUnusedLocalSymbols
-const addResource = () => ({type: ADD_RESOURCE});
-// noinspection JSUnusedLocalSymbols
-const removeResource = () => ({type: REMOVE_RESOURCE});
-const rollDice = (dice, resources = 0, rollAs) => ({type: ROLL_DICE, dice, resources, rollAs});
-const diceRolled = (result, user) => ({type: DICE_ROLLED, result, user});
-const clearResult = (user) => ({type: CLEAR_RESULT, user_id: user._id});
-export const resultCleared = ({user_id}) => ({type: RESULT_CLEARED, user_id});
-
-const RollSpec = Record({
-    roll:     List(),
-    resource: 0,
+export const Roll = Record({
+    character_id: '',
+    dice_pool:    Map(),
+    selected:     null,
+    effect:       null,
+    ignored:      null,
+    hitches:      null,
+    resources:    null,
+    total:        null,
+    name:         '',
+    icon_url:     '',
 })
 
-export const currentRollReducer = (state = RollSpec(), action) => {
-    switch (action.type) {
-        case ADD_DIE:
-            return RollSpec({
-                roll:     state.roll.push(action.sides),
-                resource: state.resource,
-            });
-
-        case REMOVE_DIE:
-            return RollSpec({
-                roll:     state.roll.delete(action.index),
-                resource: state.resource,
-            });
-
-        case ADD_RESOURCE:
-            return {
-                roll:     state.roll,
-                resource: state.resource + 1,
-            };
-
-        case REMOVE_RESOURCE:
-            return {
-                roll:     state.roll,
-                resource: Math.max(0, state.resource - 1),
-            };
-
-        case ROLL_DICE:
-        case RESET_DICE:
-            return RollSpec();
-
-        default:
-            return state;
-    }
-}
-
-const RollResult = Record({
-    selected:  List(),
-    effect:    List(),
-    ignored:   List(),
-    hitches:   List(),
-    resources: List(),
-    name:      '',
-    icon_url:  '',
-})
-
-export const handleDiceRolled =
+export const setDice = (character_id, key, label, dice, order) => ({
+    type: SET_DICE,
+    character_id,
+    key,
+    label,
+    dice,
+    order
+});
+const rollDice = (character_id) => ({type: ROLL_DICE, character_id});
+const updateResult = (character_id, source, index, target) => ({
+    type: UPDATE_RESULT,
+    character_id,
+    source,
+    index,
+    target,
+});
+export const rollUpdated = ({character_id, roll}) =>
     ({
-         roll: {selected, effect, ignored, hitches, resources},
-         user,
-         rollAs
-     }) =>
-        diceRolled(
-            RollResult({
-                selected:  List(selected),
-                effect:    List(effect),
-                ignored:   List(ignored),
-                hitches:   List(hitches),
-                resources: List(resources),
-                name:      rollAs.name,
-                icon_url:  rollAs.icon_url,
-            }),
-            user
-        )
+        type: ROLL_UPDATED,
+        character_id,
+        roll: Roll(roll)
+    });
+const clearRoll = (character_id) => ({type: CLEAR_ROLL, character_id});
+export const rollCleared = ({character_id}) => ({type: ROLL_CLEARED, character_id});
 
-export const rollResultsReducer = (state = new Map(), action) => {
+export const rollsReducer = (state = new Map(), action) => {
     switch (action.type) {
-        case DICE_ROLLED:
-            return state.set(action.user._id, action.result);
+        case ROLL_UPDATED:
+            return state.set(action.character_id, action.roll);
 
-        case RESULT_CLEARED:
-            return state.remove(action.user_id);
+        case ROLL_CLEARED:
+            return state.remove(action.character_id);
 
         default:
             return state;
     }
 }
 
-export const Roller = connect(
-    ({currentRoll, rollResults, user, characters, currentCharacter}) =>
-        ({currentRoll, rollResults, user, characters, currentCharacter}),
-    {addDie, removeDie, resetDice, rollDice, clearResult}
+const DisplayRoll = connect(
+    ({}) => ({}),
+    {setDice, rollDice, updateResult, clearRoll}
 )(({
-       currentRoll, rollResults, user, characters, currentCharacter,
-       addDie, removeDie, resetDice, rollDice, clearResult
+       roll, isEditable = false,
+       setDice, rollDice, updateResult, clearRoll
    }) => {
-        const rollResult = user != null && rollResults.has(user._id)
-            ? rollResults.get(user._id)
-            : null;
 
-        if (!currentCharacter) {
-            if (characters.size === 0) {
-                return <div>
-                    <h2>Cortex Roller</h2>
-                    <p>Please wait, a character will be assigned to you</p>
-                </div>
+        function buildDiceOptions(key, label, index, dice) {
+            function copySplice(arr, start, length, ...replace) {
+                return [
+                    ...arr.slice(0, start),
+                    ...replace,
+                    ...arr.slice(start + length)
+                ]
             }
 
-            return <div className="grid-x grid-margin-x grid-margin-y">
-                <div className="cell small-6">
-                    <h2>Cortex Roller</h2>
-                </div>
-                <div className="cell small-6 text-right">
-                    <Dropdown options={characterOptions}>
-                        <h3>Choose a character...</h3>
-                    </Dropdown>
-                </div>
-            </div>
-        }
-
-        const rollAs = {
-            name:     currentCharacter.name,
-            icon_url: currentCharacter.icon_url,
-        };
-
-        return <div>
-            <div className="grid-x grid-margin-x grid-margin-y">
-                <div className="cell small-6">
-                    <h2>Cortex Roller</h2>
-                </div>
-                <div className="cell small-6 text-right">
-                    <Dropdown options={characterOptions} disabled={characters.size === 1}>
-                        <h3>{currentCharacter.name}{' '}
-                            {currentCharacter.icon_url
-                                ? <img src={currentCharacter.icon_url} style={{height: '2.5rem'}}
-                                       alt={currentCharacter.name + ' icon'}/>
-                                : null
+            return {
+                remove: <div className="clickable"
+                             onClick={preventDefault(() => setDice(roll.character_id, key, label, copySplice(dice, index, 1)))}>
+                            Remove
+                        </div>,
+                double: <div className="clickable"
+                             onClick={preventDefault(() => setDice(roll.character_id, key, label, copySplice(dice, index, 0, dice[index])))}>
+                            Double
+                        </div>,
+                switch: <div className="">
+                            {[Dice.D4, Dice.D6, Dice.D8, Dice.D10, Dice.D12]
+                                .filter(d => d !== dice[index])
+                                .map(d => <div className="clickable inline" key={d}>
+                                    <Die sides={d}
+                                         displaySize={DisplaySize.SMALL}
+                                         onClick={preventDefault(() => setDice(roll.character_id, key, label, copySplice(dice, index, 1, d)))}
+                                    />
+                                </div>)
                             }
+                        </div>
+            }
+        }
+
+        const renderResultOption = (source, index, target, label) =>
+            <div className="clickable"
+                 onClick={preventDefault(() => updateResult(
+                     roll.character_id,
+                     source,
+                     index,
+                     target
+                 ))}>
+                {label}
+            </div>;
+
+        return <div className="card">
+            <div className="card-divider">
+                <div className="grid-x grid-margin-x">
+                    <div className="cell auto">
+                        <h3>
+                            {roll.icon_url
+                                ? <img src={roll.icon_url} style={{height: '2.5rem'}}
+                                       alt={roll.name + ' Icon'}/>
+                                : null
+                            } {' '}
+                            {roll.name}
                         </h3>
-                    </Dropdown>
+                    </div>
+                    <div className="cell shrink text-right">
+                        {isEditable
+                            ? <div>
+                                <button className="button small primary"
+                                        onClick={preventDefault(() => rollDice(roll.character_id))}
+                                >
+                                    <i className="far fa-dice"/>{' '}
+                                    Roll
+                                </button>
+                                <button className="button small alert"
+                                        onClick={preventDefault(() => clearRoll(roll.character_id))}
+                                >
+                                    <i className="far fa-times"/>{' '}
+                                </button>
+                            </div>
+                            : null
+                        }
+                    </div>
                 </div>
             </div>
-
-            <div className="grid-x grid-margin-x grid-margin-y">
-                {[Dice.D4, Dice.D6, Dice.D8, Dice.D10, Dice.D12].map(sides =>
-                    <div className="cell small-4 medium-2 text-center"
-                         key={sides}
-                    >
-                        <Die sides={sides}
-                             displaySize={DisplaySize.LARGE}
-                             style={{cursor: 'copy'}}
-                             onClick={() => addDie(sides)}
-                        />
-                    </div>
-                )}
-            </div>
-            {currentRoll.roll.size > 0 || currentRoll.resource > 0
-                ? <div>
-                    <h2>Roll:</h2>
-                    <div>
-                        {currentRoll.roll.toJS().map((sides, index) =>
-                            <Die key={index}
-                                 sides={sides}
-                                 displaySize={DisplaySize.MEDIUM}
-                                 style={{cursor: 'pointer'}}
-                                 onClick={() => removeDie(index)}
-                            />
-                        )}
-                    </div>
-                    <br/>
-                    <p>
-                        <a href='#'
-                           className='button primary'
-                           onClick={preventDefault(() => rollDice(currentRoll.roll, currentRoll.resource, rollAs))}
-                        >
-                            <i className="far fa-dice"/>{' '}
-                            Roll...
-                        </a>{' '}
-                        <a href='#'
-                           className='button alert'
-                           onClick={preventDefault(resetDice)}
-                        >
-                            <i className="far fa-trash"/>{' '}
-                            Clear
-                        </a>
-                    </p>
-                </div>
-                : null
-            }
-            {rollResult != null
-                ? <div>
-                    <h2>Result:</h2>
-                    <DisplayRollResult rollResult={rollResult}/>
-                    <p>
-                        <a href='#'
-                           className='button primary'
-                           onClick={preventDefault(() =>
-                               rollDice(
-                                   [
-                                       ...rollResult.selected,
-                                       // Filter out default d4 when not enough dice
-                                       ...rollResult.effect,
-                                       ...rollResult.ignored,
-                                       ...rollResult.hitches
-                                   ].map(([sides,]) => sides),
-                                   rollResult.resources.size,
-                                   rollAs
+            <div className="card-section">
+                <div className="grid-x grid-padding-x grid-padding-y">
+                    <div className="cell small-12 medium-6">
+                        {Object.entries(roll.dice_pool || {})
+                               .sort(([, a], [, b]) =>
+                                   a.order !== b.order
+                                       ? a.order - b.order
+                                       : a.label.localeCompare(b.label)
                                )
-                           )}
-                        >
-                            <i className="far fa-redo-alt"/>{' '}
-                            Re-roll...
-                        </a>
-                        {' '}
-                        <a href='#'
-                           className='button alert'
-                           onClick={preventDefault(() => clearResult(user))}>
-                            <i className="far fa-trash-alt"/>{' '}
-                            Clear
-                        </a>
-                    </p>
+                               .map(([key, {label, dice}]) =>
+                                   <div className='dice-pool-row' key={key}>
+                                       <div className="dice-pool-label">
+                                           {label}
+                                       </div>
+                                       <div className="dice-pool-dice">
+                                           {dice.map((die, index) =>
+                                               <Dropdown
+                                                   position={Position.RIGHT}
+                                                   options={buildDiceOptions(key, label, index, dice)}
+                                                   disabled={!isEditable}
+                                               >
+                                                   <Die sides={die}
+                                                        displaySize={DisplaySize.MEDIUM}
+                                                        key={index}
+                                                   />
+                                               </Dropdown>
+                                           )}
+                                       </div>
+                                   </div>
+                               )
+                        }
+                    </div>
+                    <div className="cell small-12 medium-6">
+                        {roll.total != null
+                            ? <div className='dice-pool-row'>
+                                <div className="dice-pool-label">
+                                    {roll.total > 0 ? `Total ${roll.total}` : 'Botch!'}
+                                </div>
+                                <div className="dice-pool-dice">
+                                    {(roll.selected || []).map(([sides, value], index) =>
+                                        <Dropdown key={index}
+                                                  position={Position.RIGHT}
+                                                  options={{
+                                                      toEffect:  renderResultOption(
+                                                          'selected',
+                                                          index,
+                                                          'effect',
+                                                          'Move to Effect'
+                                                      ),
+                                                      toIgnored: renderResultOption(
+                                                          'selected',
+                                                          index,
+                                                          'ignored',
+                                                          'Remove from Selected'
+                                                      ),
+                                                  }}
+                                        >
+                                            <Die sides={sides}
+                                                 value={value}
+                                                 displaySize={DisplaySize.MEDIUM}
+                                                 mode={Mode.SELECTED}
+                                            />
+                                        </Dropdown>
+                                    )}
+                                </div>
+                            </div>
+                            : null
+                        }
+                        {roll.effect != null
+                            ? <div className='dice-pool-row'>
+                                <div className="dice-pool-label">
+                                    Effect
+                                </div>
+                                <div className="dice-pool-dice">
+                                    {roll.effect.length > 0
+                                        ? roll.effect.map(([sides, value], index) =>
+                                            <Dropdown key={index}
+                                                      position={Position.RIGHT}
+                                                      options={{
+                                                          toEffect:  renderResultOption(
+                                                              'effect',
+                                                              index,
+                                                              'selected',
+                                                              'Move to Selected'
+                                                          ),
+                                                          toIgnored: renderResultOption(
+                                                              'effect',
+                                                              index,
+                                                              'ignored',
+                                                              'Remove from Effect'
+                                                          ),
+                                                      }}
+                                            >
+                                                <Die sides={sides}
+                                                     value={value}
+                                                     displaySize={DisplaySize.MEDIUM}
+                                                     mode={Mode.EFFECT}
+                                                />
+                                            </Dropdown>
+                                        )
+                                        : <Die sides={Dice.D4}
+                                               displaySize={DisplaySize.MEDIUM}
+                                               mode={Mode.IGNORED}
+                                        />
+                                    }
+                                </div>
+                            </div>
+                            : null
+                        }
+                        {roll.ignored && roll.ignored.length > 0
+                            ? <div className='dice-pool-row'>
+                                <div className="dice-pool-label">
+                                    Unused
+                                </div>
+                                <div className="dice-pool-dice">
+                                    {roll.ignored.map(([sides, value], index) =>
+                                        <Dropdown key={index}
+                                                  position={Position.RIGHT}
+                                                  options={{
+                                                      toEffect:  renderResultOption(
+                                                          'ignored',
+                                                          index,
+                                                          'selected',
+                                                          'Move to Selected'
+                                                      ),
+                                                      toIgnored: renderResultOption(
+                                                          'ignored',
+                                                          index,
+                                                          'effect',
+                                                          'Move to Effect'
+                                                      ),
+                                                  }}
+                                        >
+                                            <Die key={index}
+                                                 sides={sides}
+                                                 value={value}
+                                                 displaySize={DisplaySize.MEDIUM}
+                                                 mode={Mode.IGNORED}
+                                            />
+                                        </Dropdown>
+                                    )
+                                    }
+                                </div>
+                            </div>
+                            : null
+                        }
+                        {roll.hitches && roll.hitches.length > 0
+                            ? <div className='dice-pool-row'>
+                                <div className="dice-pool-label">
+                                    Hitches
+                                </div>
+                                <div className="dice-pool-dice">
+                                    {roll.hitches.map(([sides, value], index) =>
+                                        <Die key={index}
+                                             sides={sides}
+                                             value={value}
+                                             displaySize={DisplaySize.MEDIUM}
+                                             mode={Mode.HITCH}
+                                        />
+                                    )}
+                                </div>
+                            </div>
+                            : null
+                        }
+                    </div>
                 </div>
-                : null
-            }
-        </div>;
+            </div>
+        </div>
     }
-)
-
-const DisplayRollResult = ({rollResult, displaySize = DisplaySize.MEDIUM}) => <div
-    className='roll-result'>
-    <div>
-        {rollResult.selected.toJS().map(([sides, value], index) =>
-            <Die key={index}
-                 sides={sides}
-                 value={value}
-                 mode={Mode.SELECTED}
-                 displaySize={displaySize}
-            />
-        )}
-        {rollResult.effect.toJS().map(([sides, value], index) =>
-            <Die key={index}
-                 sides={sides}
-                 value={value}
-                 mode={Mode.EFFECT}
-                 displaySize={displaySize}
-            />
-        )}
-        {rollResult.ignored.toJS().map(([sides, value], index) =>
-            <Die key={index}
-                 sides={sides}
-                 value={value}
-                 mode={Mode.IGNORED}
-                 displaySize={displaySize}
-            />
-        )}
-        {rollResult.hitches.toJS().map(([sides, value], index) =>
-            <Die key={index}
-                 sides={sides}
-                 value={value}
-                 mode={Mode.HITCH}
-                 displaySize={displaySize}
-            />
-        )}
-        {rollResult.resources.size > 0
-            ? <span>
-                                <span className="dice-divider">+</span>
-                {rollResult.resources.toJS().map((value, index) =>
-                    <Die key={index}
-                         sides={Dice.D6}
-                         value={value}
-                         mode={index === 0 ? Mode.SELECTED : Mode.IGNORED}
-                         displaySize={displaySize}
-                    />
-                )}
-                            </span>
-            : null
-        }
-    </div>
-    <p>
-        Total:
-        {
-            rollResult.selected.reduce((acc, [, value]) => acc + value, 0)
-            + (rollResult.resources.first() || 0)
-        },
-        Effect:
-        {
-            (rollResult.effect.size > 0 ? [...rollResult.effect.toJS()] : [[4]]).map(
-                ([sides,], index) =>
-                    <Die key={index}
-                         mode={Mode.EFFECT}
-                         sides={sides}
-                         displaySize={DisplaySize.SMALL}
-                    />
-            )
-        }
-    </p>
-</div>
+);
 
 
 export const Rolls = connect(
-    ({rollResults}) => ({rollResults}),
+    (
+        {rolls, currentCharacter, user}
+    ) => (
+        {rolls, currentCharacter, user}
+    ),
     {}
-)(({rollResults}) => {
+)((
+    {rolls, currentCharacter, user}
+    ) => {
 
-    return <div>
-        {rollResults
-            .toArray()
-            .sort((a, b) => a.name.localeCompare(b.name))
-            .map((res, user_id) =>
-                <div className="card" key={user_id}>
-                    <div className="card-divider">
-                        <h3>
-                            {res.icon_url
-                                ? <img src={res.icon_url} style={{height: '2.5rem'}}
-                                       alt={res.name + ' Icon'}/>
-                                : null
-                            } {' '}
-                            {res.name}
-                        </h3>
-                    </div>
-                    <div className="card-section">
-                        <DisplayRollResult rollResult={res} displaySize={DisplaySize.SMALL}/>
-                    </div>
+        return <div className="grid-x grid-padding-x grid-padding-y">
+            {rolls.toArray()
+                  .sort((a, b) => {
+                      // Current character first, otherwise by name
+                      if (a.character_id === b.character_id) {
+                          return 0;
+                      }
+                      if (a.character_id === currentCharacter?._id) {
+                          return -1;
+                      }
+                      if (b.character_id === currentCharacter?._id) {
+                          return 1;
+                      }
+
+                      return a.name.localeCompare(b.name)
+                  })
+                  .map((roll, index) =>
+                      <div className="cell small-12" key={index}>
+                          <DisplayRoll roll={roll}
+                                       isEditable={user.roles.includes('Admin') || currentCharacter._id === roll.character_id}/>
+                      </div>
+                  )}
+        </div>
+    }
+)
+
+export const DiceBlock = connect(
+    ({currentCharacter, rolls}) => ({currentCharacter, rolls}),
+    {setDice}
+)(({currentCharacter, rolls, setDice}) => {
+        if (!currentCharacter) {
+            return null;
+        }
+
+        const roll = rolls.get(currentCharacter._id) || Roll();
+
+        // noinspection JSUnresolvedVariable
+        const addDieToOther = (die) =>
+            setDice(
+                currentCharacter._id,
+                'other',
+                'Other',
+                (roll && roll.dice_pool.other ? roll.dice_pool.other.dice : []).concat([die]),
+                99
+            );
+
+        return <fieldset>
+            <legend>Additional Dice</legend>
+            <div className="grid-x grid-margin-x small-up-5">
+                <div className="cell">
+                    <Die sides={Dice.D4}
+                         displaySize={DisplaySize.MEDIUM}
+                         onClick={preventDefault(() => addDieToOther(Dice.D4))}
+                    />
                 </div>
-            )}
-    </div>
-})
+                <div className="cell">
+                    <Die sides={Dice.D6}
+                         displaySize={DisplaySize.MEDIUM}
+                         onClick={preventDefault(() => addDieToOther(Dice.D6))}
+                    />
+                </div>
+                <div className="cell">
+                    <Die sides={Dice.D8}
+                         displaySize={DisplaySize.MEDIUM}
+                         onClick={preventDefault(() => addDieToOther(Dice.D8))}
+                    />
+                </div>
+                <div className="cell">
+                    <Die sides={Dice.D10}
+                         displaySize={DisplaySize.MEDIUM}
+                         onClick={preventDefault(() => addDieToOther(Dice.D10))}
+                    />
+                </div>
+                <div className="cell">
+                    <Die sides={Dice.D12}
+                         displaySize={DisplaySize.MEDIUM}
+                         onClick={preventDefault(() => addDieToOther(Dice.D12))}
+                    />
+                </div>
+            </div>
+        </fieldset>;
+    }
+);

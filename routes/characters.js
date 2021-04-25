@@ -1,5 +1,6 @@
 const {ofType} = require('redux-observable');
-const {mergeMap}= require('rxjs/operators');
+const {of} = require('rxjs');
+const {mergeMap} = require('rxjs/operators');
 
 const express = require('express');
 const router = express.Router();
@@ -8,7 +9,7 @@ const {eventualDb} = require('../db-conn.js');
 const {writeMessage} = require('../flashMessage.js');
 const {authenticated} = require('../authenticateRequest');
 const {dispatch, registerAsyncEpic} = require('../model');
-const {addScript, filterObject} = require('../util');
+const {addScript, filterObject, getRandomInt, partitionArray} = require('../util');
 
 const dice = [
     {value: 4, label: 'D4'},
@@ -287,4 +288,106 @@ registerAsyncEpic(async msg$ => {
             return {type: 'set-character-player', user_id: character._player_id, character}
         })
     )
+});
+
+registerAsyncEpic(async msg$ => {
+    const db = await eventualDb;
+
+    return msg$.pipe(
+        ofType('user-connected'),
+        mergeMap(async ({user}) => {
+            const characters = await db.collection('characters')
+                                       .find({roll: {$exists: true}})
+                                       .toArray();
+            return characters
+                .filter(({roll}) => roll != null)
+                .map(({_id, name, icon_url, roll}) => ({
+                    type:         'roll-updated',
+                    _for:         [user._id],
+                    character_id: _id,
+                    roll:         {
+                        ...roll,
+                        name,
+                        icon_url,
+                        character_id: _id
+                    },
+                }));
+        }),
+        mergeMap((arr) => of(...arr))
+    );
+});
+
+registerAsyncEpic(async msg$ => {
+    const db = await eventualDb;
+
+    return msg$.pipe(
+        ofType('set-dice', 'clear-roll', 'roll-dice', 'update-result'),
+        mergeMap(async ({type, character_id, key, label, dice, order, source, index, target}) => {
+            const _id = ObjectId(character_id);
+
+            const character = await db.collection('characters').findOne({_id});
+            if (!character) {
+                return null;
+            }
+
+            character.roll = character.roll || {};
+
+            character.roll.dice_pool = character.roll.dice_pool || {};
+
+            if (type === 'clear-roll') {
+                character.roll.dice_pool = {}
+            }
+            else if(type === 'roll-dice')
+            {
+                const dice = Object.values(character.roll.dice_pool)
+                                   .flatMap(({dice}) => dice);
+
+                const roll =
+                    dice.map(sides => [sides, getRandomInt(sides)])
+                        .sort(([sa, va], [sb, vb]) => va === vb ? sb - sa : vb - va);
+
+                const [valid, hitches] = partitionArray(roll, ([_, v]) => v > 1);
+                const [first, second, ...rest] = valid;
+                const [effect, ...ignored] = rest.sort(([sa, va], [sb, vb]) => sa === sb ? vb - va : sb - sa);
+
+                character.roll.selected = [first, second].filter(v => v !== undefined);
+                character.roll.effect = effect ? [effect] : [];
+                character.roll.ignored = ignored;
+                character.roll.hitches = hitches;
+                character.roll.total = character.roll.selected.reduce((acc, [, value]) => acc + value, 0);
+            }
+            else if(type === 'update-result') {
+                character.roll[target].push(character.roll[source][index]);
+                character.roll[source].splice(index, 1);
+                character.roll.total = character.roll.selected.reduce((acc, [,value]) => acc + value, 0);
+            }
+            else if (!Array.isArray(dice) || dice.length === 0) {
+                delete character.roll.dice_pool[key];
+            }
+            else {
+                character.roll.dice_pool[key] = {label, dice, order};
+            }
+
+            if (Object.keys(character.roll.dice_pool).length === 0) {
+                await db.collection('characters').updateOne({_id}, {$unset: {roll: ""}});
+                return {
+                    type: 'roll-cleared',
+                    character_id,
+                }
+            }
+
+            await db.collection('characters').updateOne({_id}, {$set: {roll: character.roll}});
+
+            return {
+                type: 'roll-updated',
+                character_id,
+                roll: {
+                    character_id,
+                    ...character.roll,
+                    name:     character.name,
+                    icon_url: character.icon_url
+                }
+            };
+        })
+    );
 });

@@ -186,6 +186,14 @@ img.flip {
   &:hover {
     background-color: rgba(darken($body-background, 50%), 0.2);
   }
+
+  &.selected {
+    background-color: rgba(darken($body-background, 50%), 0.2);
+
+    &:hover {
+      background-color: rgba(darken($body-background, 50%), 0.4);
+    }
+  }
 }
 
 .image-upload-container {
@@ -204,8 +212,12 @@ img.flip {
 
 .dropdown-trigger {
   cursor: pointer;
-  border: thin solid darken($body-background, 20%);
-  padding: 0.5rem;
+  background-color: rgba(darken($body-background, 50%), 0.2);
+  padding: 0.1rem;
+
+  &:hover {
+    background-color: rgba(darken($body-background, 50%), 0.4);
+  }
 }
 
 .fade-in {
@@ -327,4 +339,39 @@ fieldset {
 
 .snippet-container {
   background-color: darken($body-background, 5%);
+}
+
+.dice-pool-row {
+  display: flex;
+  border: thin darken($body-background, 20%) solid;
+  padding: 0.2rem;
+  align-items: center;
+  margin-bottom: 0.1rem;
+}
+
+.dice-pool-label {
+  flex-grow: 1;
+  font-family: $header-font-family;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  font-size: 1.25rem;
+  padding-left: 0.5rem;
+}
+
+.dice-pool-dice {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row-reverse;
+}
+
+.dropdown-container {
+  position: relative;
+}
+
+.dropdown-pane {
+  padding: 0.25rem;
+
+  &.right {
+    right: 0;
+  }
 }
