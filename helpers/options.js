@@ -7,12 +7,20 @@ module.exports = (items, options) => {
         throw new Error('Options helper: First argument should be an array of options.')
     }
 
+    // cast to array, force into strings, exclude empty values
+    const selectedArray =
+        (Array.isArray(selected) ? selected : [selected])
+            .flatMap(v => v ? [`${v}`] : []);
+
+    console.log(selectedArray, selected, [selected]);
+
     const html = items
         .map(
             item => {
                 const itemValue = handlebars.escapeExpression(item[value]);
-                const itemSelected = itemValue === `${selected}` ? 'selected="selected"' : '';
-                const itemLabel = handlebars.escapeExpression(item[label]);
+                console.log(itemValue)
+                const itemSelected = selectedArray.includes(itemValue) ? 'selected="selected"' : '';
+                const itemLabel = item[label];
 
                 return `<option value="${itemValue}" ${itemSelected}>${itemLabel}</option>`;
             }

@@ -4,6 +4,7 @@ import {SceneChange} from './sceneChange';
 import {ShowSnippet} from './snippet';
 import {CharacterSelect, CharacterSheet, Description, Trackers} from './character';
 import {DiceBlock} from './roll';
+import {CharacterAssets} from './asset';
 
 export const Layout = () =>
     <div className="grid-container full wrapper-container">
@@ -13,6 +14,7 @@ export const Layout = () =>
                     <div className="cell">
                         <CharacterSelect/>
                         <Trackers/>
+                        <CharacterAssets />
                         <DiceBlock/>
                         <Description/>
                     </div>

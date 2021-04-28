@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=IM+Fell+Great+Primer&family=IM+Fell+Great+Primer+SC&family=Lato&display=swap" rel="stylesheet"/>
     <link rel='stylesheet' href='/stylesheets/style.css'/>
     {{#each styles}}
-        <link rel='stylesheet' href='{{.}}'/>
+        <link {{{attrList .}}} />
     {{/each}}
     <link rel="icon" href="/favicon.png"/>
 </head>
@@ -62,7 +62,7 @@
     <script src="/js/foundation.util.triggers.min.js"></script>
     <script src="/js/foundation.dropdownMenu.min.js"></script>
     {{#each scripts}}
-        <script src="{{.}}"></script>
+        <script {{{attrList .}}}></script>
     {{/each}}
     <script>
         $(() => $(document).foundation())

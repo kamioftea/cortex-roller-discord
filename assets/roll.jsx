@@ -163,6 +163,7 @@ const DisplayRoll = connect(
                                        <div className="dice-pool-dice">
                                            {dice.map((die, index) =>
                                                <Dropdown
+                                                   key={index}
                                                    position={Position.RIGHT}
                                                    options={buildDiceOptions(key, label, index, dice)}
                                                    disabled={!isEditable}

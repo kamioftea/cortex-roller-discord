@@ -20,6 +20,7 @@ const session = require('express-session');
 const MongoDBStore = require('connect-mongodb-session')(session);
 
 const indexRouter = require('./routes/index');
+const assetsRouter = require('./routes/assests');
 const charactersRouter = require('./routes/characters');
 const snippetsRouter = require('./routes/snippets');
 const usersRouter = require('./routes/users');
@@ -39,7 +40,9 @@ const toClientTypes = [
     'set-characters',
     'set-character-player',
     'roll-cleared',
-    'set-active-snippet'
+    'set-active-snippet',
+    'set-asset',
+    'remove-asset',
 ];
 
 module.exports = app => {
@@ -168,6 +171,7 @@ module.exports = app => {
         next();
     })
 
+    app.use('/asset', assetsRouter);
     app.use('/character', charactersRouter);
     app.use('/snippet', snippetsRouter);
     app.use('/user', usersRouter(passport));

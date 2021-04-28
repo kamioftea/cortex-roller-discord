@@ -305,7 +305,16 @@ fieldset {
 }
 
 .align-form {
-  padding-top: $form-label-line-height + em;
+  padding-top: ($form-label-line-height * $form-label-font-size);
+}
+
+td > input[type=text], td > select {
+  margin: 0;
+}
+
+.submit-on-change.success {
+  border: 1px lighten($success-color, 20%) solid;
+  position: relative;
 }
 
 .full-height {

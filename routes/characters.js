@@ -9,15 +9,7 @@ const {eventualDb} = require('../db-conn.js');
 const {writeMessage} = require('../flashMessage.js');
 const {authenticated} = require('../authenticateRequest');
 const {dispatch, registerAsyncEpic} = require('../model');
-const {addScript, filterObject, getRandomInt, partitionArray} = require('../util');
-
-const dice = [
-    {value: 4, label: 'D4'},
-    {value: 6, label: 'D6'},
-    {value: 8, label: 'D8'},
-    {value: 10, label: 'D10'},
-    {value: 12, label: 'D12'},
-]
+const {addScript, filterObject, getRandomInt, partitionArray, diceOptions} = require('../util');
 
 const attributes = ['agility', 'awareness', 'influence', 'intellect', 'spirit', 'strength'];
 const values = ['devotion', 'glory', 'justice', 'liberty', 'mastery', 'truth'];
@@ -66,7 +58,7 @@ router.get(
             {
                 title: 'Add Character - Admin',
                 url_prefix,
-                dice,
+                diceOptions,
                 attributes,
                 values,
                 distinctions,
@@ -344,7 +336,7 @@ registerAsyncEpic(async msg$ => {
 
                 const roll =
                     dice.map(sides => [sides, getRandomInt(sides)])
-                        .sort(([sa, va], [sb, vb]) => va === vb ? sb - sa : vb - va);
+                        .sort(([sa, va], [sb, vb]) => va === vb ? sa - sb : vb - va);
 
                 const [valid, hitches] = partitionArray(roll, ([_, v]) => v > 1);
                 const [first, second, ...rest] = valid;

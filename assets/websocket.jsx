@@ -12,6 +12,7 @@ import {ofType} from 'redux-observable';
 import {setUser} from './user';
 import {ALTER_PLOT_POINTS, ALTER_STRESS, setCharacterPlayer, setCharacters} from './character';
 import {setSnippet} from './snippet';
+import {removeAsset, setAsset} from './asset';
 
 const RECONNECT_DELAY_MS = 5000;
 
@@ -44,6 +45,8 @@ const recvSocketTypes = {
     'set-character-player': setCharacterPlayer,
     'roll-cleared':         rollCleared,
     'set-active-snippet':   setSnippet,
+    'set-asset':            setAsset,
+    'remove-asset':         removeAsset,
 };
 
 export const websocketPingResponseEpic = action$ => action$.pipe(ofType(PING), map(pong));

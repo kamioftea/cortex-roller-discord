@@ -6,6 +6,7 @@ import {webSocketEpic, websocketPingResponseEpic} from './websocket';
 import {userReducer} from './user';
 import {characterPlayerEpic, charactersReducer, currentCharacterReducer} from './character';
 import {snippetReducer} from './snippet';
+import {assetReducer} from './asset';
 
 const rootReducer = combineReducers(
     {
@@ -14,6 +15,7 @@ const rootReducer = combineReducers(
         characters:       charactersReducer,
         currentCharacter: currentCharacterReducer,
         snippet:          snippetReducer,
+        assets:           assetReducer,
     }
 );
 

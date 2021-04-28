@@ -91,7 +91,7 @@ function getDieData(sides) {
         case Dice.D6:
             return {
                 viewBox: '0 0 23 23',
-                paths:   ['M23 2H2V21H21V0Z'],
+                paths:   ['M21 2H2V21H21Z'],
                 text:    {x: 11, y: 16, fontSize: '12px'},
             }
         case Dice.D8:
