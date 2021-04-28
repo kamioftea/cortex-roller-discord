@@ -140,9 +140,27 @@ router.post(
         res.redirect(req.baseUrl)
 
         const snippet = await db.collection('snippets').findOne({_id});
-        console.log('hi', snippet);
         if (snippet.active) {
             dispatch({type: 'set-active-snippet', snippet});
+        }
+    }
+)
+
+router.post(
+    '/delete/:id',
+    async (req, res) => {
+        const {id} = req.params;
+        const _id = ObjectId(id);
+
+        const db = await eventualDb;
+
+        const snippet = await db.collection('snippets').findOne({_id});
+
+        await db.collection('snippets').deleteOne({_id});
+        res.redirect(req.baseUrl);
+
+        if(snippet.active) {
+            dispatch({type: 'set-active-snippet', snippet: null})
         }
     }
 )
@@ -155,8 +173,8 @@ router.post(
 
         const db = await eventualDb;
 
-        await db.collection('snippets').update({active: true}, {$set: {active: false}});
-        await db.collection('snippets').update({_id}, {$set: {active: true}});
+        await db.collection('snippets').updateMany({active: true}, {$set: {active: false}});
+        await db.collection('snippets').updateMany({_id}, {$set: {active: true}});
 
         res.redirect(req.baseUrl)
 
@@ -173,7 +191,7 @@ router.post(
     async (req, res) => {
         const db = await eventualDb;
 
-        await db.collection('snippets').update({active: true}, {$set: {active: false}});
+        await db.collection('snippets').updateMany({active: true}, {$set: {active: false}});
 
         res.redirect(req.baseUrl)
         dispatch({type: 'set-active-snippet', snippet: null})

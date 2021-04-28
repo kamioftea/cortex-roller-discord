@@ -30,6 +30,12 @@
                             <i class="far fa-pencil"></i>
                             Edit
                         </a>
+                        <form class="inline" action="{{ ../base_url }}/delete/{{_id}}" method="post">
+                            <button type="submit" class="button alert small">
+                                <i class="far fa-trash"></i>
+                                Delete
+                            </button>
+                        </form>
                         {{#if active}}
                             <form method="post" action="{{ ../base_url }}/clear-active" style="display: inline-block">
                                 <button type="submit" class="button alert small">Clear Active</button>

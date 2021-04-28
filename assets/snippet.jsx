@@ -1,10 +1,7 @@
 import React from "react";
 import {connect} from "react-redux";
 import {Record} from 'immutable';
-import {Parser, HtmlRenderer} from 'commonmark'
-
-const parser = new Parser({smart: true});
-const renderer = new HtmlRenderer({});
+import {renderMarkdown} from './util';
 
 const SET_SNIPPET = Symbol('set-snippet')
 
@@ -38,7 +35,7 @@ export const ShowSnippet = connect(({snippet}) => ({snippet}), {})
         return null;
     }
 
-    return <div className='fade-in' key={snippet.title}>
+    return <div className='fade-in margin-top-1' key={snippet.title}>
         {snippet.image_url
             ? <img src={snippet.image_url}
                    style={{width: snippet.image_width || '100%'}}
@@ -50,7 +47,7 @@ export const ShowSnippet = connect(({snippet}) => ({snippet}), {})
         {snippet.description
             ? <div className={snippet.text_style || 'description-medium'}
                    dangerouslySetInnerHTML={{
-                       __html: renderer.render(parser.parse(snippet.description))
+                       __html: renderMarkdown(snippet.description)
                    }}/>
             : null
         }

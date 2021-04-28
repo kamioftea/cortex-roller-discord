@@ -100,7 +100,7 @@
                                     {{titleCase this}}
                                     <select name="attributes[{{ this }}][die]">
                                         <option value="">-- Not Set --</option>
-                                        {{options ../dice
+                                        {{options ../diceOptions
                                                   selected=(lookup (lookup ../character/attributes this) 'die') }}
                                     </select>
                                 </label>
@@ -116,7 +116,7 @@
                                 Die
                                 <select name="catalyst_die">
                                     <option value="">-- Not Set --</option>
-                                    {{options dice selected=character.catalyst_die }}
+                                    {{options diceOptions selected=character.catalyst_die }}
                                 </select>
                             </label>
                         </fieldset>
@@ -160,7 +160,7 @@
                                     {{titleCase this}}
                                     <select name="values[{{ this }}][die]">
                                         <option value="">-- Not Set --</option>
-                                        {{options ../dice
+                                        {{options ../diceOptions
                                                   selected=(lookup (lookup ../character/values this) 'die') }}
                                     </select>
                                 </label>
@@ -243,7 +243,7 @@
                             {{>form_generic_trait
                                     baseName="specialities"
                                     index=@index
-                                    dice=../dice
+                                    dice=../diceOptions
                                     label=label
                                     die=die
                                     description=description
@@ -267,7 +267,7 @@
                     <legend>Signature Asset</legend>
                     {{~>form_generic_trait
                             baseName="signature_asset"
-                            dice=dice
+                            dice=diceOptions
                             includeEmptyDie=true
                             label=character.signature_asset.label
                             die=character.signature_asset.die
@@ -284,7 +284,8 @@
     {{>form_generic_trait
             baseName="__baseName__"
             index="__index__"
-            dice=dice die=6
+            dice=diceOptions
+            die=6
             includeDescription=true
     }}
 </template>
@@ -293,7 +294,7 @@
     {{>form_generic_trait
             baseName="__baseName__"
             index="__index__"
-            dice=dice
+            dice=diceOptions
             die=6
             dieWidth=3
             buttonWidth=2

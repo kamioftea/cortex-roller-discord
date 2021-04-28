@@ -1,7 +1,6 @@
 const {Observable, Subject, EMPTY, merge} = require('rxjs');
 const {map, mergeMap} = require('rxjs/operators');
 const {ofType} = require('redux-observable');
-const {getRandomInt, partitionArray} = require('./util.js');
 const fetch = require('node-fetch');
 const {eventualDb} = require('./db-conn');
 
@@ -20,6 +19,28 @@ function registerEpic(epic) {
         unsubscribe() {
             console.log('unsubscribing');
             resultSubscription.unsubscribe();
+        }
+    }
+}
+
+
+function registerAsyncEpic(epic) {
+    const eventualResult = epic(message$);
+
+    let resultSubscription = null;
+
+    eventualResult.then(result$ => {
+        if (!result$ instanceof Observable) {
+            console.error('Expected epic to return an Observable')
+        }
+
+        resultSubscription = result$.subscribe(msg => message$.next(msg));
+    });
+
+    return {
+        unsubscribe() {
+            console.log('unsubscribing');
+            resultSubscription && resultSubscription.unsubscribe();
         }
     }
 }
@@ -53,37 +74,6 @@ const postToDiscord = (msg) => {
         })
 
 }
-
-registerEpic(
-    (msg$) =>
-        msg$.pipe(
-            ofType('roll-dice'),
-            map(({dice, resources, rollAs, sender}) => {
-                const roll =
-                    dice.map(sides => [sides, getRandomInt(sides)])
-                        .sort(([sa, va], [sb, vb]) => va === vb ? sb - sa : vb - va);
-
-                const [valid, hitches] = partitionArray(roll, ([_, v]) => v > 1);
-                const [first, second, ...rest] = valid;
-                const [effect, ...ignored] = rest.sort(([sa, va], [sb, vb]) => sa === sb ? vb - va : sb - sa);
-
-                return {
-                    type: 'dice-rolled',
-                    rollAs,
-                    user: sender,
-                    roll: {
-                        selected:  [first, second].filter(v => v !== undefined),
-                        effect:    effect ? [effect] : [],
-                        ignored,
-                        hitches:   [...hitches],
-                        resources: [...new Array(resources)]
-                                       .map(() => getRandomInt(6))
-                                       .sort((a, b) => b - a)
-                    }
-                };
-            })
-        )
-);
 
 registerEpic(
     (msg$) => {
@@ -176,7 +166,7 @@ async function lookupSnippet(user) {
     const snippet = await db.collection('snippets').findOne({active: true});
 
     return {
-        type:     'set-active-snippet',
+        type: 'set-active-snippet',
         _for: [user._id],
         snippet
     }
@@ -202,4 +192,4 @@ registerEpic(msg$ =>
     )
 )
 
-module.exports = {registerEpic, dispatch};
+module.exports = {registerEpic, registerAsyncEpic, dispatch};
