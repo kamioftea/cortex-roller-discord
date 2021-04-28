@@ -126,8 +126,6 @@ router.get(
         const character = await db.collection('characters').findOne({_id})
 
         if (character) {
-            console.log(character);
-
             // noinspection JSUnresolvedVariable
             res.render('characters/form', {
                 title: `Edit ${character.name || 'Character'} - Admin`,

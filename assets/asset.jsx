@@ -59,7 +59,6 @@ export const CharacterAssets = connect(
         {characterAssets.map(asset => {
                 const dieKey = 'asset-' + asset._id;
                 const selected = dicePool[dieKey];
-                console.log(asset.toJS())
 
                 return <div key={asset._id}
                             className={`clickable ${selected ? 'selected' : ''}`}

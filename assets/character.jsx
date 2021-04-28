@@ -205,10 +205,9 @@ export const Trackers = connect(
                         <div className="cell small-2 text-right">
                             <button
                                 className={`button primary small ${die >= Dice.D12 ? 'disabled' : ''}`}
-                                onClick={preventDefault(() => {
-                                    console.log('hi', alterStress(character._id, stress, +1))
-                                    return die >= Dice.D12 ? alterStress(character._id, stress, +1) : null;
-                                })}
+                                onClick={preventDefault(() =>
+                                    die >= Dice.D12 ? alterStress(character._id, stress, +1) : null)
+                                }
                             >
                                 <i className="far fa-plus"/>
                             </button>
@@ -391,16 +390,15 @@ export const CharacterSheet = connect(
 
                         return <div key={distinction}>
                             <div className={`clickable ${selected ? 'selected' : ''}`}
-                                 onClick={preventDefault(() => {
-                                     console.log('hi');
-                                     return setDice(
+                                 onClick={preventDefault(() =>
+                                     setDice(
                                          character._id,
                                          'distinction',
                                          label,
                                          selected ? null : [Dice.D8],
                                          5
-                                     );
-                                 })}
+                                     ))
+                                 }
                             >
                                 <div className="grid-x grid-margin-x align-middle">
                                     <div className='cell auto'>

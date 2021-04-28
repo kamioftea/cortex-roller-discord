@@ -127,8 +127,8 @@ module.exports = app => {
                                 }
                                 try {
                                     ws.send(JSON.stringify(msg))
-                                } catch (ignored) {
-                                    console.log('Error sending message', msg, ignored)
+                                } catch (err) {
+                                    console.log('Error sending message', msg, err)
                                 }
                             }
                         );
