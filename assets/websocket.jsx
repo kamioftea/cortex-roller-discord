@@ -3,7 +3,6 @@ import {webSocket} from 'rxjs/webSocket';
 import {delay, filter, map, repeatWhen, retryWhen} from 'rxjs/operators';
 import {
     CLEAR_ROLL,
-    REMOVE_DIE,
     ROLL_DICE, rollCleared, rollUpdated,
     SET_DICE, UPDATE_RESULT
 } from './roll';
@@ -27,7 +26,6 @@ const pong = () => ({type: PONG});
 
 const sendSocketTypes = {
     [SET_DICE]:             'set-dice',
-    [REMOVE_DIE]:           'remove-die',
     [ROLL_DICE]:            'roll-dice',
     [UPDATE_RESULT]:        'update-result',
     [TRIGGER_SCENE_CHANGE]: 'trigger-scene-change',

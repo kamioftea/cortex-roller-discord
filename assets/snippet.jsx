@@ -9,6 +9,7 @@ const Snippet = Record({
     title:          '',
     image_url:      null,
     description:    null,
+    notes:          null,
     image_position: null,
     image_width:    null,
     text_style:     null,

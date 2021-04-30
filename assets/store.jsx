@@ -25,7 +25,7 @@ const loggingEpic = action$ => {
     return EMPTY;
 };
 
-export const buildStore = (websocketUrl) => {
+export const buildStore = websocketUrl => {
     const rootEpic = combineEpics(
         loggingEpic,
         webSocketEpic(websocketUrl),

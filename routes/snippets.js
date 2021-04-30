@@ -57,6 +57,40 @@ router.get(
     }
 )
 
+router.get(
+    '/add/character/:characterId',
+    async (req, res) => {
+        addScript(res, '/javascripts/image-upload.js');
+        addScript(res, '/javascripts/snippets/form.js');
+
+        const {characterId} = req.params;
+
+        if(!characterId) {
+            writeMessage(req, 'Character ID must follow /character', 'alert');
+            return res.redirect(req.originalUrl)
+        }
+
+        const _id = ObjectId(characterId);
+        const db = await eventualDb;
+        const character = await db.collection('characters').findOne({_id});
+
+        if(!character) {
+            writeMessage(req, 'Character Not Found', 'alert');
+            return res.redirect(req.originalUrl)
+        }
+
+        res.render(
+            'snippets/form',
+            {
+                title: `Add Snippet for ${character.name} - Admin`,
+                positions,
+                textStyles,
+                character
+            }
+        );
+    }
+)
+
 router.post(
     '/add',
     async (req, res) => {
@@ -116,7 +150,15 @@ router.post(
         const {id} = req.params;
         const _id = ObjectId(id);
 
-        const {title, image_url, description, image_position, image_width, text_style} = req.body;
+        const {
+            title,
+            image_url,
+            description,
+            notes,
+            image_position,
+            image_width,
+            text_style
+        } = req.body;
 
         if (!title) {
             writeMessage(req, 'Title must be provided', 'alert');
@@ -130,7 +172,8 @@ router.post(
                 $set: {
                     title,
                     image_url:      image_url || null,
-                    description:    description || null,
+                    description:    description.trim() || null,
+                    notes:          notes.trim() || null,
                     image_position: image_position || null,
                     image_width:    image_width || null,
                     text_style:     text_style || null,

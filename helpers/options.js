@@ -12,13 +12,10 @@ module.exports = (items, options) => {
         (Array.isArray(selected) ? selected : [selected])
             .flatMap(v => v ? [`${v}`] : []);
 
-    console.log(selectedArray, selected, [selected]);
-
     const html = items
         .map(
             item => {
                 const itemValue = handlebars.escapeExpression(item[value]);
-                console.log(itemValue)
                 const itemSelected = selectedArray.includes(itemValue) ? 'selected="selected"' : '';
                 const itemLabel = item[label];
 
