@@ -3,6 +3,7 @@ import {connect} from "react-redux";
 import {Map, Record} from 'immutable';
 import {Dice, Die, DisplaySize, Mode} from './dice';
 import {Dropdown, Position, preventDefault} from './util.jsx';
+import {isNumeric} from 'rxjs/internal-compatibility';
 
 export const SET_DICE = Symbol('set-dice');
 export const ROLL_DICE = Symbol('roll-dice');
@@ -349,7 +350,11 @@ export const Rolls = connect(
                   .map((roll, index) =>
                       <div className="cell small-12" key={index}>
                           <DisplayRoll roll={roll}
-                                       isEditable={user.roles.includes('Admin') || currentCharacter._id === roll.character_id}/>
+                                       isEditable={
+                                           (user.roles || []).includes('Admin')
+                                           || currentCharacter?._id === roll?.character_id
+                                       }
+                          />
                       </div>
                   )}
         </div>
@@ -379,36 +384,19 @@ export const DiceBlock = connect(
         return <fieldset>
             <legend>Additional Dice</legend>
             <div className="grid-x grid-margin-x small-up-5">
-                <div className="cell">
-                    <Die sides={Dice.D4}
-                         displaySize={DisplaySize.MEDIUM}
-                         onClick={preventDefault(() => addDieToOther(Dice.D4))}
-                    />
-                </div>
-                <div className="cell">
-                    <Die sides={Dice.D6}
-                         displaySize={DisplaySize.MEDIUM}
-                         onClick={preventDefault(() => addDieToOther(Dice.D6))}
-                    />
-                </div>
-                <div className="cell">
-                    <Die sides={Dice.D8}
-                         displaySize={DisplaySize.MEDIUM}
-                         onClick={preventDefault(() => addDieToOther(Dice.D8))}
-                    />
-                </div>
-                <div className="cell">
-                    <Die sides={Dice.D10}
-                         displaySize={DisplaySize.MEDIUM}
-                         onClick={preventDefault(() => addDieToOther(Dice.D10))}
-                    />
-                </div>
-                <div className="cell">
-                    <Die sides={Dice.D12}
-                         displaySize={DisplaySize.MEDIUM}
-                         onClick={preventDefault(() => addDieToOther(Dice.D12))}
-                    />
-                </div>
+                {Object.values(Dice)
+                       .filter(die => isNumeric(die))
+                       .map(die =>
+                           <div className="cell" key={die}>
+                               <div className="clickable text-center">
+                                   <Die sides={die}
+                                        displaySize={DisplaySize.MEDIUM}
+                                        onClick={preventDefault(() => addDieToOther(die))}
+                                   />
+                               </div>
+                           </div>
+                       )
+                }
             </div>
         </fieldset>;
     }

@@ -1,27 +1,47 @@
 import React from "react";
 import {connect} from "react-redux";
-import {Record} from 'immutable';
+import {Map, Record} from 'immutable';
 import {renderMarkdown} from './util';
 
+export const SET_ACTIVE_SNIPPET = Symbol('set-active-snippet')
 const SET_SNIPPET = Symbol('set-snippet')
+export const REMOVE_SNIPPET = Symbol('remove-snippet')
+export const UPDATE_SNIPPET = Symbol('update-snippet')
+export const UPDATE_ACTIVE_SNIPPET = Symbol('active-snippet')
 
 const Snippet = Record({
+    _id:            '',
     title:          '',
     image_url:      null,
     description:    null,
+    notes:          null,
     image_position: null,
     image_width:    null,
     text_style:     null,
+    active:         false,
+})
+
+export const setActiveSnippet = ({snippet}) => ({
+    type:    SET_ACTIVE_SNIPPET,
+    snippet: snippet && Snippet(snippet),
 })
 
 export const setSnippet = ({snippet}) => ({
     type:    SET_SNIPPET,
-    snippet: snippet && Snippet(snippet),
+    snippet: Snippet(snippet),
 })
 
-export function snippetReducer(state = null, action) {
+export const removeSnippet = ({snippet_id}) => ({
+    type: REMOVE_SNIPPET,
+    snippet_id,
+})
+
+export const updateSnippet = snippet => ({type: UPDATE_SNIPPET, snippet});
+export const updateActiveSnippet = snippet_id => ({type: UPDATE_ACTIVE_SNIPPET, snippet_id})
+
+export function activeSnippetReducer(state = null, action) {
     switch (action.type) {
-        case SET_SNIPPET:
+        case SET_ACTIVE_SNIPPET:
             return action.snippet || null;
 
         default:
@@ -29,8 +49,28 @@ export function snippetReducer(state = null, action) {
     }
 }
 
+export function snippetsReducer(state = Map(), action) {
+    switch (action.type) {
+        case SET_SNIPPET:
+            return state.set(action.snippet._id, action.snippet);
+
+        case REMOVE_SNIPPET:
+            return state.delete(action.snippet_id);
+
+        case SET_ACTIVE_SNIPPET:
+            return action.snippet !== null
+                ? state.set(action.snippet._id, action.snippet)
+                : state.map(snippet => snippet.set('active', false));
+
+        default:
+            return state;
+    }
+}
+
 export const ShowSnippet = connect(({snippet}) => ({snippet}), {})
-(({snippet}) => {
+(({snippet, snippetOverride}) => {
+    snippet = snippetOverride || snippet;
+
     if (!snippet) {
         return null;
     }

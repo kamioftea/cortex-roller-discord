@@ -22,6 +22,7 @@ const MongoDBStore = require('connect-mongodb-session')(session);
 const indexRouter = require('./routes/index');
 const assetsRouter = require('./routes/assests');
 const charactersRouter = require('./routes/characters');
+const narratorRouter = require('./routes/narrator');
 const snippetsRouter = require('./routes/snippets');
 const usersRouter = require('./routes/users');
 
@@ -33,6 +34,8 @@ const fromClientTypes = [
     'clear-roll',
     'alter-stress',
     'alter-plot-points',
+    'update-snippet',
+    'update-active-snippet',
 ];
 const toClientTypes = [
     'roll-updated',
@@ -43,6 +46,8 @@ const toClientTypes = [
     'set-active-snippet',
     'set-asset',
     'remove-asset',
+    'set-snippet',
+    'remove-snippet',
 ];
 
 module.exports = app => {
@@ -122,7 +127,7 @@ module.exports = app => {
                         ofType(...toClientTypes))
                         .subscribe(
                             (msg) => {
-                                if (msg._for != null && !msg._for.includes(user._id)) {
+                                if (msg._for != null && !msg._for.map(id => id.toString()).includes(user._id.toString())) {
                                     return;
                                 }
                                 try {
@@ -143,7 +148,7 @@ module.exports = app => {
                 try {
                     const msg = JSON.parse(data);
                     if (fromClientTypes.includes(msg.type)) {
-                        ws$.next({...msg, sender: user});
+                        ws$.next({...msg, _sender: user});
                     }
                 } catch (err) {
                     console.error(err)
@@ -173,6 +178,7 @@ module.exports = app => {
 
     app.use('/asset', assetsRouter);
     app.use('/character', charactersRouter);
+    app.use('/narrator', narratorRouter);
     app.use('/snippet', snippetsRouter);
     app.use('/user', usersRouter(passport));
     app.use('/', indexRouter);

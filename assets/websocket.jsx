@@ -3,7 +3,6 @@ import {webSocket} from 'rxjs/webSocket';
 import {delay, filter, map, repeatWhen, retryWhen} from 'rxjs/operators';
 import {
     CLEAR_ROLL,
-    REMOVE_DIE,
     ROLL_DICE, rollCleared, rollUpdated,
     SET_DICE, UPDATE_RESULT
 } from './roll';
@@ -11,7 +10,13 @@ import {TRIGGER_SCENE_CHANGE} from './sceneChange';
 import {ofType} from 'redux-observable';
 import {setUser} from './user';
 import {ALTER_PLOT_POINTS, ALTER_STRESS, setCharacterPlayer, setCharacters} from './character';
-import {setSnippet} from './snippet';
+import {
+    removeSnippet,
+    setActiveSnippet,
+    setSnippet,
+    UPDATE_ACTIVE_SNIPPET,
+    UPDATE_SNIPPET
+} from './snippet';
 import {removeAsset, setAsset} from './asset';
 
 const RECONNECT_DELAY_MS = 5000;
@@ -26,15 +31,16 @@ const ping = () => ({type: PING});
 const pong = () => ({type: PONG});
 
 const sendSocketTypes = {
-    [SET_DICE]:             'set-dice',
-    [REMOVE_DIE]:           'remove-die',
-    [ROLL_DICE]:            'roll-dice',
-    [UPDATE_RESULT]:        'update-result',
-    [TRIGGER_SCENE_CHANGE]: 'trigger-scene-change',
-    [PONG]:                 'pong',
-    [CLEAR_ROLL]:           'clear-roll',
-    [ALTER_PLOT_POINTS]:    'alter-plot-points',
-    [ALTER_STRESS]:         'alter-stress',
+    [SET_DICE]:              'set-dice',
+    [ROLL_DICE]:             'roll-dice',
+    [UPDATE_RESULT]:         'update-result',
+    [TRIGGER_SCENE_CHANGE]:  'trigger-scene-change',
+    [PONG]:                  'pong',
+    [CLEAR_ROLL]:            'clear-roll',
+    [ALTER_PLOT_POINTS]:     'alter-plot-points',
+    [ALTER_STRESS]:          'alter-stress',
+    [UPDATE_SNIPPET]:        'update-snippet',
+    [UPDATE_ACTIVE_SNIPPET]: 'update-active-snippet',
 };
 
 const recvSocketTypes = {
@@ -44,7 +50,9 @@ const recvSocketTypes = {
     'set-characters':       setCharacters,
     'set-character-player': setCharacterPlayer,
     'roll-cleared':         rollCleared,
-    'set-active-snippet':   setSnippet,
+    'set-active-snippet':   setActiveSnippet,
+    'set-snippet':          setSnippet,
+    'remove-snippet':       removeSnippet,
     'set-asset':            setAsset,
     'remove-asset':         removeAsset,
 };

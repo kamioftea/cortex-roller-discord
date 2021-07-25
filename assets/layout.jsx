@@ -23,7 +23,7 @@ export const Layout = () =>
                     </div>
                 </div>
             </div>
-            <div className="cell small-12 medium-6 large-4 full-height">
+            <div className="cell small-12 medium-6 large-4">
                 <CharacterSheet/>
             </div>
             <div className="cell small-12 large-5 snippet-container">

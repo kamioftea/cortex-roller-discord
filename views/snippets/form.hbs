@@ -4,9 +4,61 @@
             {{#if snippet }}
                 Edit Snippet: {{ snippet.title }}
             {{else}}
-                Add Snippet
+                Add Snippet{{#if character}} from {{character.name}}{{/if}}
             {{/if}}
         </h1>
+        {{#if character }}
+            <div class="grid-x grid-margin-x">
+                <div class="cell auto">
+                    <h3>
+                        {{# if character.icon_url }}
+                            <img src="{{character.icon_url}}" style="height: 2.5rem" alt="{{character.name}} Icon"/>
+                        {{/if}}
+                        {{character.name}}
+                    </h3>
+                </div>
+                <div class="cell auto">
+                    <button class="set-field-button button primary"
+                            data-field="title"
+                            data-value="{{character.name}}"
+                    >
+                        Set Title from Name
+                    </button>
+                </div>
+                <div class="cell auto">
+                    <button class="set-field-button button primary"
+                            data-field="image_url"
+                            data-value="{{character.image_url}}"
+                    >
+                        Set Image from Image
+                    </button>
+                </div>
+                <div class="cell auto">
+                    <button class="set-field-button button primary"
+                            data-field="image_url"
+                            data-value="{{character.icon_url}}"
+                    >
+                        Set Image from Icon
+                    </button>
+                </div>
+                <div class="cell auto">
+                    <button class="set-field-button button primary"
+                            data-field="description"
+                            data-value="{{character.description}}"
+                    >
+                        Set Desc from Desc
+                    </button>
+                </div>
+                <div class="cell auto">
+                    <button class="set-field-button button primary"
+                            data-field="notes"
+                            data-value="{{character.description}}"
+                    >
+                        Set Notes from Desc
+                    </button>
+                </div>
+            </div>
+        {{/if}}
         <div class="grid-x grid-margin-x">
             <div class="cell small-12 medium-4">
                 <label>
@@ -62,8 +114,17 @@
                 <label>
                     Description
                     <!--suppress CssOverwrittenProperties -->
-                    <textarea class="markdown" name="description" style="height: 32rem; height: calc(30vh + 23.4rem)">
+                    <textarea class="markdown" name="description"
+                              style="height: 32rem; height: calc(15vh + 10.2rem)">
                         {{~ snippet.description ~}}
+                    </textarea>
+                </label>
+                <label>
+                    Narrator Notes
+                    <!--suppress CssOverwrittenProperties -->
+                    <textarea class="markdown" name="notes"
+                              style="height: 32rem; height: calc(15vh + 10.2rem)">
+                        {{~ snippet.notes ~}}
                     </textarea>
                 </label>
             </div>

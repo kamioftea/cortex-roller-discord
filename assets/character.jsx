@@ -64,9 +64,11 @@ export const characterPlayerEpic =
             ofType(SET_CHARACTER_PLAYER),
             withLatestFrom(state$),
             map(([{user_id, character}, {characters, user}]) => {
-                const filtered = characters.filter(c => c.name !== character.name);
+                const filtered = characters.filter(c => c._id !== character._id);
                 return setCharacters({
-                    characters: user_id === user._id ? filtered.push(character) : filtered
+                    characters: user_id === user._id || (user.roles || []).includes('Admin')
+                                    ? filtered.push(character)
+                                    : filtered
                 });
             })
         );
@@ -205,8 +207,13 @@ export const Trackers = connect(
                         <div className="cell small-2 text-right">
                             <button
                                 className={`button primary small ${die >= Dice.D12 ? 'disabled' : ''}`}
-                                onClick={preventDefault(() =>
-                                    die >= Dice.D12 ? alterStress(character._id, stress, +1) : null)
+                                onClick={preventDefault(() => {
+                                    console.log(
+                                        character._id, stress, die, Dice.D12, (die || 0) <= Dice.D12
+                                    )
+
+                                    return (die || 0) <= Dice.D12 ? alterStress(character._id, stress, +1) : null;
+                                })
                                 }
                             >
                                 <i className="far fa-plus"/>

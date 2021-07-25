@@ -131,7 +131,7 @@ router.get(
                 title: `Edit ${character.name || 'Character'} - Admin`,
                 character,
                 url_prefix,
-                dice,
+                diceOptions,
                 attributes,
                 values,
                 distinctions,

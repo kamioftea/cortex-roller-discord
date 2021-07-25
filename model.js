@@ -152,7 +152,10 @@ registerEpic(msg$ => {
 
 async function lookupCharacters(user) {
     const db = await eventualDb;
-    const characters = await db.collection('characters').find({_player_id: user._id}).toArray();
+    const query = (user.roles || []).includes('Admin')
+        ? {}
+        : {_player_id: user._id}
+    const characters = await db.collection('characters').find(query).toArray();
 
     return {
         type:     'set-characters',

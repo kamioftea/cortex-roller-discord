@@ -3,7 +3,10 @@ const webpack = require('webpack');
 
 module.exports = {
 	mode:      'development',
-	entry:     './assets/index.jsx',
+	entry:     {
+		main:     './assets/index.jsx',
+		narrator: './assets/narrator-index.jsx',
+	},
 	module:    {
 		rules: [
 			{
