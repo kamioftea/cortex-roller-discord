@@ -18,6 +18,9 @@ const authenticated = (role = null, json = false) => (req, res, next) => {
     next();
 };
 
+const hasRole = (req, role) => req.user && req.user.roles.includes(role)
+
 module.exports = {
-    authenticated
-};
+    authenticated,
+    hasRole
+}

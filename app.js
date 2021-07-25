@@ -2,12 +2,13 @@ const express = require('express');
 const hbs = require('hbs')
 const createError = require('http-errors');
 const path = require('path');
+const fs = require('fs');
 const glob = require('glob-promise');
 const favicon = require('serve-favicon');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const logger = require('morgan');
-const sassMiddleware = require('node-sass-middleware');
+const sass = require('sass');
 const passport = require('./passport');
 const {authenticated} = require('./authenticateRequest');
 const {registerEpic} = require('./model');
@@ -21,6 +22,7 @@ const MongoDBStore = require('connect-mongodb-session')(session);
 
 const indexRouter = require('./routes/index');
 const assetsRouter = require('./routes/assests');
+const campaignsRouter = require('./routes/campaigns/index');
 const charactersRouter = require('./routes/characters');
 const narratorRouter = require('./routes/narrator');
 const snippetsRouter = require('./routes/snippets');
@@ -90,17 +92,23 @@ module.exports = app => {
 
     app.use(readMessage);
 
-    app.use(sassMiddleware({
-        src:            path.join(__dirname, 'public'),
-        dest:           path.join(__dirname, 'public'),
+    const sassResult = sass.renderSync({
+        file:           path.join(__dirname, 'public', 'stylesheets', 'style.scss'),
+
         indentedSyntax: false, // true = .sass and false = .scss
         sourceMap:      true,
+        quietDeps:      true,
         includePaths:   [
             path.join(__dirname, 'node_modules', 'foundation-sites', 'scss'),
             path.join(__dirname, 'res', 'fontawesome', 'fontawesome-pro', 'scss'),
             path.join(__dirname, 'node_modules', 'motion-ui', 'src'),
         ]
-    }));
+    });
+
+    fs.writeFileSync(
+        path.join(__dirname, 'public', 'stylesheets', 'style.css'),
+        sassResult.css
+    );
 
     app.use(express.static(path.join(__dirname, 'public')));
     app.use('/js', express.static(path.join(__dirname, 'node_modules', 'jquery', 'dist')));
@@ -177,6 +185,7 @@ module.exports = app => {
     })
 
     app.use('/asset', assetsRouter);
+    app.use('/campaign', campaignsRouter);
     app.use('/character', charactersRouter);
     app.use('/narrator', narratorRouter);
     app.use('/snippet', snippetsRouter);

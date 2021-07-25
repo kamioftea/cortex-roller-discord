@@ -1,4 +1,4 @@
-#!
+#!/bin/node
 
 const prompt = require('prompt');
 const {promisify} = require('util');
@@ -60,7 +60,7 @@ prompt.start();
     if(password !== password_check)
     {
         console.log('Passwords must match');
-        return;
+        return closeDb()
     }
 
     const hash = await bcryptHash(password, 14);

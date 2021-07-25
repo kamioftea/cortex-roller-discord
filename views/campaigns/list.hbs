@@ -1,0 +1,45 @@
+<div class="grid-container">
+    <div class="grid-x grid-margin-x">
+        <div class="cell auto align-self-middle">
+            <h1 class="text-primary">Campaigns</h1>
+        </div>
+        <div class="cell auto align-self-middle text-right">
+            <a href="{{ base_url }}/add" class="button success">
+                <i class="far fa-plus"></i>
+                Add Campaign
+            </a>
+        </div>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>Icon</th>
+                <th>Title</th>
+                <th>Narrator</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#each campaigns }}
+                <tr>
+                    <td>
+                        {{#if (default icon_url banner_url) }}
+                            <img alt="{{ title }} Thumbnail" src="{{ default icon_url banner_url }}" style="height:48px;"/>
+                        {{else}}
+                            -
+                        {{/if}}
+                    </td>
+                    <td>
+                        {{ title }}
+                    </td>
+                    <td>
+                        {{ narrator }}
+                    </td>
+                    <td>
+
+                    </td>
+                </tr>
+            {{/each}}
+        </tbody>
+    </table>
+</div>

@@ -1,0 +1,105 @@
+<form method="post" action="{{ base_url }}{{#if campaign }}/edit/{{snippet._id}}{{else}}/add{{/if}}">
+    <div class="grid-container">
+        <h1 class="text-primary">
+            {{#if campaign }}
+                Edit Campaign: {{ campaign.title }}
+            {{else}}
+                Add Campaign
+            {{/if}}
+        </h1>
+        <div class="grid-x grid-margin-x">
+            <div class="cell small-12 medium-4">
+                <label>
+                    Title
+                    <input name="title" type="text" value="{{ campaign.title }}"/>
+                </label>
+                <label>
+                    Slug
+                    <input name="slug"
+                           type="text"
+                           value="{{ campaign.slug }}"
+                           data-slug-for="[name=title]"
+                    />
+                </label>
+                <label>
+                    Icon Url
+                    <input name="icon_url" type="url" value="{{ campaign.icon_url }}"/>
+                </label>
+                <div class="image-upload-container"
+                     data-image-upload
+                     data-image-upload-source="icon"
+                     data-image-upload-trigger="icon_trigger"
+                     data-image-upload-target="[name=icon_url]"
+                     data-image-upload-clear="icon_clear"
+                     data-image-upload-url="/image-upload"
+                     data-image-upload-prefix="{{ url_prefix }}"
+                >
+                    <label for="icon"
+                           id="icon_url_trigger"
+                           class="button">
+                        <i class="far fa-cloud-upload"></i>
+                        Upload File
+                    </label>
+                    <input type="file"
+                           id="icon"
+                           class="show-for-sr"
+                    />
+                    <button class="button alert" id="icon_clear">
+                        <i class="far fa-times"></i>
+                        Clear Image
+                    </button>
+                </div>
+            </div>
+            <div class="cell small-12 medium-8">
+
+                <label>
+                    Banner Url
+                    <input name="banner_url" type="url" value="{{ campaign.banner_url }}"/>
+                </label>
+                <div class="image-upload-container"
+                     data-image-upload
+                     data-image-upload-source="banner"
+                     data-image-upload-trigger="banner_trigger"
+                     data-image-upload-target="[name=banner_url]"
+                     data-image-upload-clear="banner_clear"
+                     data-image-upload-url="/image-upload"
+                     data-image-upload-prefix="{{ url_prefix }}"
+                >
+                    <label for="banner"
+                           id="banner_url_trigger"
+                           class="button">
+                        <i class="far fa-cloud-upload"></i>
+                        Upload File
+                    </label>
+                    <input type="file"
+                           id="banner"
+                           class="show-for-sr"
+                    />
+                    <button class="button alert" id="banner_clear">
+                        <i class="far fa-times"></i>
+                        Clear Image
+                    </button>
+                </div>
+                <label>
+                    Description
+                    <!--suppress CssOverwrittenProperties -->
+                    <textarea class="markdown" name="description"
+                              style="height: 8rem">
+                        {{~ campaign.description ~}}
+                    </textarea>
+                </label>
+            </div>
+            <div class="cell small-12 medium-12">
+                <label class="text-right">
+                    <button class="button primary">
+                        {{#if campaign }}
+                            Edit Campaign
+                        {{else}}
+                            Add Campaign
+                        {{/if}}
+                    </button>
+                </label>
+            </div>
+        </div>
+    </div>
+</form>
