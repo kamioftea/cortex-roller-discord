@@ -1,11 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const {ObjectId} = require('mongodb');
+const {filter, mergeMap} = require('rxjs/operators');
+const {of} = require('rxjs');
+const {ofType} = require('redux-observable');
 const {eventualDb} = require('../db-conn.js');
 const {writeMessage} = require('../flashMessage.js');
 const {authenticated} = require('../authenticateRequest');
 const {dispatch} = require('../model');
 const {addScript} = require('../util');
+const {registerAsyncEpic} = require('../model');
 
 const positions = [
     {value: 'float-left', label: 'Left'},
@@ -98,7 +102,7 @@ router.post(
 
         if (title) {
             const db = await eventualDb;
-            await db.collection('snippets').insertOne({
+            const snippet = {
                 title,
                 image_url:      image_url || null,
                 description:    description || null,
@@ -106,8 +110,16 @@ router.post(
                 image_width:    image_width || null,
                 text_style:     text_style || null,
                 active:         false,
-            })
-            res.redirect(req.baseUrl)
+            };
+            const {insertedId: _id} = await db.collection('snippets').insertOne(snippet)
+            res.redirect(req.baseUrl);
+
+            const adminUsers = await db.collection('users').find({roles: 'Admin'}).toArray();
+            dispatch({
+                type:    'set-snippet',
+                snippet: {_id, ...snippet},
+                _for:    adminUsers.map(u => ObjectId(u._id))
+            });
         }
         else {
             writeMessage(req, 'Title must be provided', 'alert');
@@ -186,6 +198,9 @@ router.post(
         if (snippet.active) {
             dispatch({type: 'set-active-snippet', snippet});
         }
+
+        const adminUsers = await db.collection('users').find({roles: 'Admin'}).toArray();
+        dispatch({type: 'set-snippet', snippet, _for: adminUsers.map(u => u._id)});
     }
 )
 
@@ -202,9 +217,12 @@ router.post(
         await db.collection('snippets').deleteOne({_id});
         res.redirect(req.baseUrl);
 
-        if(snippet.active) {
+        if (snippet.active) {
             dispatch({type: 'set-active-snippet', snippet: null})
         }
+
+        const adminUsers = await db.collection('users').find({roles: 'Admin'}).toArray();
+        dispatch({type: 'remove-snippet', snippet_id: _id, _for: adminUsers.map(u => u._id)});
     }
 )
 
@@ -240,5 +258,72 @@ router.post(
         dispatch({type: 'set-active-snippet', snippet: null})
     }
 )
+
+
+registerAsyncEpic(async msg$ => {
+    const db = await eventualDb;
+
+    return msg$.pipe(
+        ofType('user-connected'),
+        filter(({user}) => (user.roles || []).includes('Admin')),
+        mergeMap(async ({user}) => {
+            const snippets = await db.collection('snippets').find().toArray();
+
+            return snippets.map(snippet => ({
+                type: 'set-snippet',
+                _for: [user._id],
+                snippet
+            }));
+        }),
+        mergeMap((arr) => of(...arr))
+    );
+});
+
+registerAsyncEpic(
+    async msg$ => {
+        const db = await eventualDb;
+
+        return msg$.pipe(
+            ofType('update-snippet'),
+            filter(({_sender}) => (_sender.roles || []).includes('Admin')),
+            mergeMap(async ({snippet}) => {
+                const _id = ObjectId(snippet._id);
+
+                const {notes} = snippet;
+
+                await db.collection('snippets').updateOne(
+                    {_id},
+                    {$set: {notes: notes.trim() || null}}
+                );
+
+                const adminUsers = await db.collection('users').find({roles: 'Admin'}).toArray();
+                dispatch({type: 'set-snippet', snippet, _for: adminUsers.map(u => u._id)});
+            })
+        );
+    });
+
+registerAsyncEpic(
+    async msg$ => {
+        const db = await eventualDb;
+
+        return msg$.pipe(
+            ofType('update-active-snippet'),
+            filter(({_sender}) => (_sender.roles || []).includes('Admin')),
+            mergeMap(async ({snippet_id}) => {
+                await db.collection('snippets').updateMany({active: true}, {$set: {active: false}});
+
+                if (snippet_id) {
+                    const _id = ObjectId(snippet_id);
+                    await db.collection('snippets').updateMany({_id}, {$set: {active: true}});
+                    const snippet = await db.collection('snippets').findOne({_id});
+
+                    return ({type: 'set-active-snippet', snippet})
+                }
+
+                return ({type: 'set-active-snippet', snippet: null})
+            })
+        );
+    }
+);
 
 module.exports = router;

@@ -7,7 +7,7 @@ import {Die, DisplaySize} from './dice';
 
 const Asset = Record({
     _id:          '',
-    label:         '',
+    label:        '',
     die:          0,
     characterIds: [],
 })

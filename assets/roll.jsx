@@ -352,7 +352,7 @@ export const Rolls = connect(
                           <DisplayRoll roll={roll}
                                        isEditable={
                                            (user.roles || []).includes('Admin')
-                                           || currentCharacter._id === roll.character_id
+                                           || currentCharacter?._id === roll?.character_id
                                        }
                           />
                       </div>

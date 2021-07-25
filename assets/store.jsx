@@ -5,8 +5,9 @@ import {rollsReducer} from './roll';
 import {webSocketEpic, websocketPingResponseEpic} from './websocket';
 import {userReducer} from './user';
 import {characterPlayerEpic, charactersReducer, currentCharacterReducer} from './character';
-import {snippetReducer} from './snippet';
+import {activeSnippetReducer, snippetsReducer} from './snippet';
 import {assetReducer} from './asset';
+import {narratorSnippetReducer} from './narrator';
 
 const rootReducer = combineReducers(
     {
@@ -14,8 +15,10 @@ const rootReducer = combineReducers(
         user:             userReducer,
         characters:       charactersReducer,
         currentCharacter: currentCharacterReducer,
-        snippet:          snippetReducer,
+        snippet:          activeSnippetReducer,
         assets:           assetReducer,
+        snippets:         snippetsReducer,
+        narratorSnippet:  narratorSnippetReducer,
     }
 );
 
