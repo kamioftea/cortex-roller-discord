@@ -34,7 +34,8 @@ router.use((req, res, next) => {
 /* GET snippet list page. */
 router.get('/', async function (req, res) {
     const db = await eventualDb;
-    const snippets = await db.collection('snippets').find().sort({title: 1}).toArray();
+    const {_id: campaign_id} = res.locals.campaign
+    const snippets = await db.collection('snippets').find({campaign_id}).sort({title: 1}).toArray();
 
     res.render(
         'snippets/list',
@@ -99,10 +100,12 @@ router.post(
     '/add',
     async (req, res) => {
         const {title, image_url, description, image_position, image_width, text_style} = req.body;
+        const {_id: campaign_id} = res.locals.campaign
 
         if (title) {
             const db = await eventualDb;
             const snippet = {
+                campaign_id,
                 title,
                 image_url:      image_url || null,
                 description:    description || null,
@@ -231,10 +234,11 @@ router.post(
     async (req, res) => {
         const {id} = req.params;
         const _id = ObjectId(id);
+        const {_id: campaign_id} = res.locals.campaign
 
         const db = await eventualDb;
 
-        await db.collection('snippets').updateMany({active: true}, {$set: {active: false}});
+        await db.collection('snippets').updateMany({campaign_id, active: true}, {$set: {active: false}});
         await db.collection('snippets').updateMany({_id}, {$set: {active: true}});
 
         res.redirect(req.baseUrl)
@@ -250,9 +254,11 @@ router.post(
 router.post(
     '/clear-active',
     async (req, res) => {
+        const {_id: campaign_id} = res.locals.campaign
+
         const db = await eventualDb;
 
-        await db.collection('snippets').updateMany({active: true}, {$set: {active: false}});
+        await db.collection('snippets').updateMany({campaign_id, active: true}, {$set: {active: false}});
 
         res.redirect(req.baseUrl)
         dispatch({type: 'set-active-snippet', snippet: null})

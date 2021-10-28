@@ -3,23 +3,34 @@ const router = express.Router();
 const fs = require('fs/promises');
 const path = require('path');
 const uuid =  require('uuid');
-
-const {addScript} = require('../util');
+const eventualDb = require('../db-conn')
 const {authenticated} = require('../authenticateRequest');
 
 const uploadPath = path.join(__dirname, '..', 'public', 'images', 'upload');
 
 router.use(authenticated())
 
+router.use((req, res, next) => {
+    res.locals.base_url = req.baseUrl;
+    next();
+});
+
 /* GET home page. */
 router.get('/', async function (req, res) {
-    addScript(res, '/javascripts/webpack-main.js');
+    const db = await eventualDb;
+    if(!(req.user.roles || []).includes('Admin')){
+        const characters = await db.collection('characters').find({_player_id: req.user._id})
+        const campaigns = await db.collection('campaigns').find({_id: {$in:  characters.map(c => c.campaign_id)}})
+        if(campaigns.length === 1) {
+            return res.redirect(`${req.locals.base_url}/${campaigns[0].slug}`)
+        }
 
-    res.render('index', {
-        title:         'Tales of Xadia',
-        user:          req.user,
-        websocket_url: process.env.WEBSOCKET_URL || 'ws://localhost:3000/listen',
-    });
+        return res.render('index', {
+            title:         'Tales of Xadia',
+            user:          req.user,
+            campaigns
+        })
+    }
 });
 
 router.post(

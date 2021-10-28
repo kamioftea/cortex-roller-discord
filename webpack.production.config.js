@@ -1,5 +1,4 @@
 const webpack = require('webpack');
-const MinifyPlugin = require("babel-minify-webpack-plugin");
 
 const settings = require('./webpack.development.config')
 
@@ -13,6 +12,10 @@ settings.plugins.push(
 	)
 );
 
-settings.plugins.push(new MinifyPlugin());
+settings.optimization ={
+	splitChunks: {
+		chunks: 'all',
+	},
+};
 
 module.exports = settings;

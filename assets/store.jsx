@@ -8,6 +8,9 @@ import {characterPlayerEpic, charactersReducer, currentCharacterReducer} from '.
 import {activeSnippetReducer, snippetsReducer} from './snippet';
 import {assetReducer} from './asset';
 import {narratorSnippetReducer} from './narrator';
+import {campaignReducer} from './campaign';
+
+
 
 const rootReducer = combineReducers(
     {
@@ -19,6 +22,7 @@ const rootReducer = combineReducers(
         assets:           assetReducer,
         snippets:         snippetsReducer,
         narratorSnippet:  narratorSnippetReducer,
+        campaign:         campaignReducer,
     }
 );
 

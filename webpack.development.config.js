@@ -14,6 +14,11 @@ module.exports = {
 				loader:  'babel-loader',
 				options: {
 					presets: ['@babel/preset-env', '@babel/preset-react'],
+					env: {
+						production: {
+							presets: ["minify"]
+						}
+					}
 				}
 			},
 		]

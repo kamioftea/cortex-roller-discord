@@ -25,7 +25,8 @@ router.use((req, res, next) => {
 /* GET character list page. */
 router.get('/', async function (req, res) {
     const db = await eventualDb;
-    const characters = await db.collection('characters').find().sort({name: 1}).toArray();
+    const {_id: campaign_id} = res.locals.campaign
+    const characters = await db.collection('characters').find({campaign_id}).sort({name: 1}).toArray();
     const users = await db.collection('users')
                           .find({roles: 'Player'})
                           .sort({name: 1})
@@ -84,10 +85,13 @@ router.post(
             signature_asset,
         } = req.body;
 
+        const {_id: campaign_id} = res.locals.campaign
+
         if (name) {
             const db = await eventualDb;
             let filteredAttributes = filterObject(attributes, a => a.die);
             await db.collection('characters').insertOne({
+                campaign_id,
                 name,
                 description,
                 icon_url,

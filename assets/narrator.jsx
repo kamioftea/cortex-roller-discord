@@ -52,10 +52,11 @@ export const Layout = () =>
     </div>
 
 const Characters = connect(
-    ({characters, assets}) => ({characters, assets}),
+    ({characters, assets, campaign}) => ({characters, assets, campaign}),
     {}
-)(({characters, assets}) => {
+)(({characters, assets, campaign}) => {
         return <div>
+            <pre>{JSON.stringify(campaign.toJS(), null, " ")}</pre>
             {characters
                 .sort((a, b) => a.name.localeCompare(b.name))
                 .map(character => {
@@ -103,7 +104,7 @@ const Characters = connect(
                                     <div className="cell shrink text-right">
                                         <a className={`button small primary`}
                                            target="_blank"
-                                           href={`/character/edit/${character._id}`}
+                                           href={`/${campaign.slug}/character/edit/${character._id}`}
                                         >
                                             <span className="far fa-external-link"/>{' '}
                                             Edit

@@ -20,6 +20,8 @@ const session = require('express-session');
 
 const MongoDBStore = require('connect-mongodb-session')(session);
 
+const withCampaign = require('./middleware/withCampaign')
+
 const indexRouter = require('./routes/index');
 const assetsRouter = require('./routes/assests');
 const campaignsRouter = require('./routes/campaigns/index');
@@ -27,6 +29,7 @@ const charactersRouter = require('./routes/characters');
 const narratorRouter = require('./routes/narrator');
 const snippetsRouter = require('./routes/snippets');
 const usersRouter = require('./routes/users');
+const diceRollerRoute = require('./routes/dice-roller');
 
 const fromClientTypes = [
     'trigger-scene-change',
@@ -184,15 +187,21 @@ module.exports = app => {
         next();
     })
 
-    app.use('/asset', assetsRouter);
+    const inCampaignRouter = express.Router();
+
+    inCampaignRouter.use('/asset', assetsRouter);
+    inCampaignRouter.use('/character', charactersRouter);
+    inCampaignRouter.use('/narrator', narratorRouter);
+    inCampaignRouter.use('/snippet', snippetsRouter);
+    diceRollerRoute(inCampaignRouter);
+
     app.use('/campaign', campaignsRouter);
-    app.use('/character', charactersRouter);
-    app.use('/narrator', narratorRouter);
-    app.use('/snippet', snippetsRouter);
     app.use('/user', usersRouter(passport));
+    app.use('/:campaignSlug', withCampaign)
+    app.use('/:campaignSlug', inCampaignRouter)
     app.use('/', indexRouter);
 
-// catch 404 and forward to error handler
+    // catch 404 and forward to error handler
     app.use(function (req, res, next) {
         next(createError(404));
     });

@@ -3,7 +3,6 @@ import {connect} from "react-redux";
 import {Map, Record} from 'immutable';
 import {Dice, Die, DisplaySize, Mode} from './dice';
 import {Dropdown, Position, preventDefault} from './util.jsx';
-import {isNumeric} from 'rxjs/internal-compatibility';
 
 export const SET_DICE = Symbol('set-dice');
 export const ROLL_DICE = Symbol('roll-dice');
@@ -385,7 +384,7 @@ export const DiceBlock = connect(
             <legend>Additional Dice</legend>
             <div className="grid-x grid-margin-x small-up-5">
                 {Object.values(Dice)
-                       .filter(die => isNumeric(die))
+                       .filter(die => !isNaN(die))
                        .map(die =>
                            <div className="cell" key={die}>
                                <div className="clickable text-center">

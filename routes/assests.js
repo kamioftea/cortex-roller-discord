@@ -21,8 +21,9 @@ router.use((req, res, next) => {
 /* GET snippet list page. */
 router.get('/', async function (req, res) {
     const db = await eventualDb;
-    const assets = await db.collection('assets').find().sort({label: 1}).toArray();
-    const characters = await db.collection('characters').find()
+    const {_id: campaign_id} = res.locals.campaign;
+    const assets = await db.collection('assets').find({campaign_id}).sort({label: 1}).toArray();
+    const characters = await db.collection('characters').find({campaign_id})
                                .sort({name: 1})
                                .toArray();
 
@@ -67,10 +68,12 @@ router.post(
     '/add',
     async (req, res) => {
         const {label, die} = req.body;
+        const {_id: campaign_id} = res.locals.campaign;
 
         if (label && die) {
             const db = await eventualDb;
             const {insertedId: _id} = await db.collection('assets').insertOne({
+                campaign_id,
                 label,
                 die,
             })
