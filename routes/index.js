@@ -3,7 +3,7 @@ const router = express.Router();
 const fs = require('fs/promises');
 const path = require('path');
 const uuid =  require('uuid');
-const eventualDb = require('../db-conn')
+const {eventualDb} = require('../db-conn')
 const {authenticated} = require('../authenticateRequest');
 
 const uploadPath = path.join(__dirname, '..', 'public', 'images', 'upload');
@@ -18,19 +18,24 @@ router.use((req, res, next) => {
 /* GET home page. */
 router.get('/', async function (req, res) {
     const db = await eventualDb;
+    let campaigns;
     if(!(req.user.roles || []).includes('Admin')){
         const characters = await db.collection('characters').find({_player_id: req.user._id})
-        const campaigns = await db.collection('campaigns').find({_id: {$in:  characters.map(c => c.campaign_id)}})
+        campaigns = await db.collection('campaigns').find({_id: {$in:  characters.map(c => c.campaign_id)}}).toArray()
         if(campaigns.length === 1) {
             return res.redirect(`${req.locals.base_url}/${campaigns[0].slug}`)
         }
-
-        return res.render('index', {
-            title:         'Tales of Xadia',
-            user:          req.user,
-            campaigns
-        })
     }
+    else {
+        campaigns = await db.collection('campaigns').find({}).toArray();
+    }
+
+    return res.render('index', {
+        title:         'Tales of Xadia',
+        user:          req.user,
+        campaigns
+    })
+
 });
 
 router.post(

@@ -13,7 +13,7 @@ function registerEpic(epic) {
         console.error('Expected epic to return an Observable')
     }
 
-    const resultSubscription = result$.subscribe(msg => message$.next(msg));
+    const resultSubscription = result$.subscribe(msg => msg && msg.type && message$.next(msg));
 
     return {
         unsubscribe() {
@@ -34,7 +34,14 @@ function registerAsyncEpic(epic) {
             console.error('Expected epic to return an Observable')
         }
 
-        resultSubscription = result$.subscribe(msg => message$.next(msg));
+        resultSubscription = result$.subscribe(msg => {
+            if(!msg || !msg.type)
+            {
+                console.error(new Error('msg was null or had no type'), msg)
+                return
+            }
+            message$.next(msg)
+        });
     });
 
     return {
@@ -46,6 +53,11 @@ function registerAsyncEpic(epic) {
 }
 
 function dispatch(msg) {
+    if(!msg || !msg.type)
+    {
+        console.error(new Error('msg was null or had no type'), msg)
+        return
+    }
     message$.next(msg)
 }
 
@@ -150,7 +162,7 @@ registerEpic(msg$ => {
     return EMPTY;
 })
 
-async function lookupCharacters(user) {
+async function lookupCharacters(user, _campaign_id) {
     const db = await eventualDb;
     const query = (user.roles || []).includes('Admin')
         ? {}
@@ -160,28 +172,30 @@ async function lookupCharacters(user) {
     return {
         type:     'set-characters',
         _for: [user._id],
-        characters
+        _campaign_id,
+        characters,
     }
 }
 
-async function lookupSnippet(user) {
+async function lookupSnippet(user, _campaign_id) {
     const db = await eventualDb;
     const snippet = await db.collection('snippets').findOne({active: true});
 
     return {
         type: 'set-active-snippet',
         _for: [user._id],
-        snippet
+        _campaign_id,
+        snippet,
     }
 }
 
 registerEpic(msg$ =>
     msg$.pipe(
         ofType('user-connected'),
-        mergeMap(({user}) =>
+        mergeMap(({user, _campaign_id}) =>
             merge(
-                lookupCharacters(user),
-                lookupSnippet(user),
+                lookupCharacters(user, _campaign_id),
+                lookupSnippet(user, _campaign_id),
             )
         ),
     )

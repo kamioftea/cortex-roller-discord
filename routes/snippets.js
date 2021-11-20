@@ -119,9 +119,10 @@ router.post(
 
             const adminUsers = await db.collection('users').find({roles: 'Admin'}).toArray();
             dispatch({
-                type:    'set-snippet',
-                snippet: {_id, ...snippet},
-                _for:    adminUsers.map(u => ObjectId(u._id))
+                type:         'set-snippet',
+                snippet:      {_id, ...snippet},
+                _campaign_id: snippet.campaign_id,
+                _for:         adminUsers.map(u => ObjectId(u._id))
             });
         }
         else {
@@ -199,11 +200,16 @@ router.post(
 
         const snippet = await db.collection('snippets').findOne({_id});
         if (snippet.active) {
-            dispatch({type: 'set-active-snippet', snippet});
+            dispatch({type: 'set-active-snippet', snippet, _campaign_id: snippet.campaign_id});
         }
 
         const adminUsers = await db.collection('users').find({roles: 'Admin'}).toArray();
-        dispatch({type: 'set-snippet', snippet, _for: adminUsers.map(u => u._id)});
+        dispatch({
+            type:         'set-snippet',
+            snippet,
+            _for:         adminUsers.map(u => u._id),
+            _campaign_id: snippet.campaign_id.toString()
+        });
     }
 )
 
@@ -212,6 +218,7 @@ router.post(
     async (req, res) => {
         const {id} = req.params;
         const _id = ObjectId(id);
+        const {_id: _campaign_id} = res.locals.campaign;
 
         const db = await eventualDb;
 
@@ -221,11 +228,16 @@ router.post(
         res.redirect(req.baseUrl);
 
         if (snippet.active) {
-            dispatch({type: 'set-active-snippet', snippet: null})
+            dispatch({type: 'set-active-snippet', snippet: null, _campaign_id})
         }
 
         const adminUsers = await db.collection('users').find({roles: 'Admin'}).toArray();
-        dispatch({type: 'remove-snippet', snippet_id: _id, _for: adminUsers.map(u => u._id)});
+        dispatch({
+            type:         'remove-snippet',
+            snippet_id:   _id,
+            _for:         adminUsers.map(u => u._id),
+            _campaign_id: _campaign_id.toString()
+        });
     }
 )
 
@@ -245,7 +257,7 @@ router.post(
 
         const snippet = await db.collection('snippets').findOne({_id});
         if (snippet) {
-            dispatch({type: 'set-active-snippet', snippet})
+            dispatch({type: 'set-active-snippet', snippet, _campaign_id: snippet.campaign_id})
         }
     }
 )
@@ -261,7 +273,7 @@ router.post(
         await db.collection('snippets').updateMany({campaign_id, active: true}, {$set: {active: false}});
 
         res.redirect(req.baseUrl)
-        dispatch({type: 'set-active-snippet', snippet: null})
+        dispatch({type: 'set-active-snippet', snippet: null, _campaign_id: campaign_id})
     }
 )
 
@@ -272,12 +284,15 @@ registerAsyncEpic(async msg$ => {
     return msg$.pipe(
         ofType('user-connected'),
         filter(({user}) => (user.roles || []).includes('Admin')),
-        mergeMap(async ({user}) => {
-            const snippets = await db.collection('snippets').find().toArray();
+        mergeMap(async ({user, _campaign_id}) => {
+            const snippets = await db.collection('snippets')
+                                     .find({campaign_id: ObjectId(_campaign_id)})
+                                     .toArray();
 
             return snippets.map(snippet => ({
                 type: 'set-snippet',
                 _for: [user._id],
+                _campaign_id,
                 snippet
             }));
         }),
@@ -292,19 +307,25 @@ registerAsyncEpic(
         return msg$.pipe(
             ofType('update-snippet'),
             filter(({_sender}) => (_sender.roles || []).includes('Admin')),
-            mergeMap(async ({snippet}) => {
+            mergeMap(async ({snippet, _campaign_id}) => {
                 const _id = ObjectId(snippet._id);
 
                 const {notes} = snippet;
 
                 await db.collection('snippets').updateOne(
-                    {_id},
+                    {_id, campaign_id: ObjectId(_campaign_id)},
                     {$set: {notes: notes.trim() || null}}
                 );
 
                 const adminUsers = await db.collection('users').find({roles: 'Admin'}).toArray();
-                dispatch({type: 'set-snippet', snippet, _for: adminUsers.map(u => u._id)});
-            })
+                return ({
+                    type: 'set-snippet',
+                    snippet,
+                    _campaign_id,
+                    _for: adminUsers.map(u => u._id)
+                });
+            }),
+            mergeMap((promise) => of(promise))
         );
     });
 
@@ -315,18 +336,27 @@ registerAsyncEpic(
         return msg$.pipe(
             ofType('update-active-snippet'),
             filter(({_sender}) => (_sender.roles || []).includes('Admin')),
-            mergeMap(async ({snippet_id}) => {
-                await db.collection('snippets').updateMany({active: true}, {$set: {active: false}});
+            mergeMap(async ({snippet_id, _campaign_id}) => {
+                await db.collection('snippets')
+                        .updateMany(
+                            {active: true, campaign_id: ObjectId(_campaign_id)},
+                            {$set: {active: false}}
+                        );
 
                 if (snippet_id) {
                     const _id = ObjectId(snippet_id);
-                    await db.collection('snippets').updateMany({_id}, {$set: {active: true}});
-                    const snippet = await db.collection('snippets').findOne({_id});
+                    await db.collection('snippets')
+                            .updateOne({
+                                _id,
+                                campaign_id: ObjectId(_campaign_id)
+                            }, {$set: {active: true}});
+                    const snippet = await db.collection('snippets')
+                                            .findOne({_id, campaign_id: ObjectId(_campaign_id)});
 
-                    return ({type: 'set-active-snippet', snippet})
+                    return of({type: 'set-active-snippet', _campaign_id, snippet})
                 }
 
-                return ({type: 'set-active-snippet', snippet: null})
+                return of({type: 'set-active-snippet', _campaign_id, snippet: null})
             })
         );
     }

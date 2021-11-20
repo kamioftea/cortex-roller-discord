@@ -4,10 +4,13 @@ const {eventualDb} = require('../db-conn')
 
 module.exports = router => {
     router.use(authenticated())
-    router.use(async (req, res) => {
+    router.use(async (req, res, next) => {
         const db = await eventualDb;
 
         const campaign = res.locals.campaign;
+        if(!campaign) {
+            return next()
+        }
 
         if (!req.user.roles?.includes('Admin')) {
             const character= await db.collection('characters')
@@ -15,7 +18,6 @@ module.exports = router => {
                                           campaign_id: campaign._id,
                                           _player_id:  req.user._id
                                       })
-            console.log(character);
             if (character === null) {
                 res.status(403);
                 return res.render('auth/forbidden', {title: 'Forbidden'});

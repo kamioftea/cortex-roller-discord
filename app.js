@@ -20,7 +20,7 @@ const session = require('express-session');
 
 const MongoDBStore = require('connect-mongodb-session')(session);
 
-const withCampaign = require('./middleware/withCampaign')
+const {withCampaign} = require('./middleware/withCampaign');
 
 const indexRouter = require('./routes/index');
 const assetsRouter = require('./routes/assests');
@@ -124,9 +124,10 @@ module.exports = app => {
         (req, res) => res.redirect('/')
     );
 
-    app.use('/listen', authenticated());
-    app.ws('/listen', (ws, req) => {
+    app.use('/listen/:id', authenticated());
+    app.ws('/listen/:id', async (ws, req) => {
         try {
+            const _campaign_id = req.params.id;
             const user = req.user;
             const ws$ = new Subject();
 
@@ -138,6 +139,9 @@ module.exports = app => {
                         ofType(...toClientTypes))
                         .subscribe(
                             (msg) => {
+                                if(msg._campaign_id != null && msg._campaign_id.toString() !== _campaign_id) {
+                                    return;
+                                }
                                 if (msg._for != null && !msg._for.map(id => id.toString()).includes(user._id.toString())) {
                                     return;
                                 }
@@ -151,7 +155,7 @@ module.exports = app => {
                 return ws$;
             });
 
-            ws$.next({type: 'user-connected', user});
+            ws$.next({type: 'user-connected', user, _campaign_id});
 
             const intervalID = setInterval(() => ws.send(JSON.stringify({type: 'ping'})), 5000);
 
@@ -159,7 +163,7 @@ module.exports = app => {
                 try {
                     const msg = JSON.parse(data);
                     if (fromClientTypes.includes(msg.type)) {
-                        ws$.next({...msg, _sender: user});
+                        ws$.next({...msg, _sender: user, _campaign_id});
                     }
                 } catch (err) {
                     console.error(err)
@@ -173,10 +177,10 @@ module.exports = app => {
                 }
                 resultSubscription.unsubscribe();
 
-                ws$.next({type: 'user-disconnected', user})
+                ws$.next({type: 'user-disconnected', user, _campaign_id})
             })
 
-            ws.send(JSON.stringify({type: 'set-user', user}));
+            ws.send(JSON.stringify({type: 'set-user', user, _campaign_id}));
         } catch (err) {
             console.log(err)
         }

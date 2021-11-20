@@ -80,7 +80,7 @@ router.post(
 
             res.redirect(req.baseUrl);
 
-            dispatch({type: 'set-asset', asset: {_id, label, die}});
+            dispatch({type: 'set-asset', asset: {_id, label, die}, _campaign_id: campaign_id});
         }
         else {
             writeMessage(req, 'Label and die must be provided', 'alert');
@@ -114,7 +114,7 @@ router.post(
         res.json({success: true});
 
         const asset = await db.collection('assets').findOne({_id});
-        dispatch({type: 'set-asset', asset});
+        dispatch({type: 'set-asset', asset, _campaign_id: asset.campaign_id});
     }
 )
 
@@ -123,12 +123,11 @@ router.post(
     async (req, res) => {
         const {id} = req.params;
         const _id = ObjectId(id);
-
         const db = await eventualDb;
         await db.collection('assets').deleteOne({_id});
         res.redirect(req.baseUrl);
 
-        dispatch({type: 'remove-asset', _id});
+        dispatch({type: 'remove-asset', _id, _campaign_id: res.locals.campaign._id});
     }
 )
 
@@ -137,12 +136,13 @@ registerAsyncEpic(async msg$ => {
 
     return msg$.pipe(
         ofType('user-connected'),
-        mergeMap(async ({user}) => {
-            const assets = await db.collection('assets').find().toArray();
+        mergeMap(async ({user, _campaign_id}) => {
+            const assets = await db.collection('assets').find({_campaign_id}).toArray();
             return assets
                 .map(asset => ({
                     type:         'set-asset',
                     _for:         [user._id],
+                    _campaign_id,
                     asset,
                 }));
         }),

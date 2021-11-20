@@ -193,7 +193,12 @@ router.post(
 
             const character = await db.collection('characters').findOne({_id});
             if (character && character._player_id) {
-                dispatch({type: 'set-character-player', user_id: character._player_id, character})
+                dispatch({
+                    type:         'set-character-player',
+                    user_id:      character._player_id,
+                    character,
+                    _campaign_id: character.campaign_id,
+                })
             }
         }
         else {
@@ -226,7 +231,12 @@ router.post(
         res.json({success: updated.result.nModified === 1});
         const character = await db.collection('characters').findOne({_id});
         if (character) {
-            dispatch({type: 'set-character-player', user_id: player_id, character})
+            dispatch({
+                type:         'set-character-player',
+                user_id:      player_id,
+                character,
+                _campaign_id: character.campaign_id
+            })
         }
     }
 )
@@ -238,9 +248,10 @@ registerAsyncEpic(async msg$ => {
 
     return msg$.pipe(
         ofType('alter-plot-points'),
-        mergeMap(async ({character_id, delta}) => {
+        mergeMap(async ({character_id, delta, _campaign_id}) => {
             const _id = ObjectId(character_id);
-            const character = await db.collection('characters').findOne({_id});
+            const character = await db.collection('characters')
+                                      .findOne({_id, campaign_id: ObjectId(_campaign_id)});
             if (!character) {
                 return null;
             }
@@ -250,7 +261,12 @@ registerAsyncEpic(async msg$ => {
             await db.collection('characters')
                     .updateOne({_id}, {$set: {plot_points: character.plot_points}});
 
-            return {type: 'set-character-player', user_id: character._player_id, character}
+            return {
+                type:    'set-character-player',
+                _campaign_id,
+                user_id: character._player_id,
+                character
+            }
         })
     )
 });
@@ -260,26 +276,34 @@ registerAsyncEpic(async msg$ => {
 
     return msg$.pipe(
         ofType('alter-stress'),
-        mergeMap(async ({character_id, stress_type, delta}) => {
+        mergeMap(async ({character_id, stress_type, delta, _campaign_id}) => {
             const _id = ObjectId(character_id);
-            const character = await db.collection('characters').findOne({_id});
+            console.log(_campaign_id)
+            const query = {_id, campaign_id: ObjectId(_campaign_id)};
+            console.log(query)
+            const character = await db.collection('characters').findOne(query);
             if (!character) {
                 return null;
             }
 
-            if(!character.stress) {
+            if (!character.stress) {
                 character.stress = {};
             }
 
             character.stress[stress_type] = Math.min((character.stress[stress_type] || 4) + (delta * 2), 12);
-            if(character.stress[stress_type] < 6) {
+            if (character.stress[stress_type] < 6) {
                 delete character.stress[stress_type];
             }
 
             await db.collection('characters')
                     .updateOne({_id}, {$set: {stress: character.stress}});
 
-            return {type: 'set-character-player', user_id: character._player_id, character}
+            return ({
+                type:    'set-character-player',
+                _campaign_id,
+                user_id: character._player_id,
+                character
+            })
         })
     )
 });
@@ -289,15 +313,19 @@ registerAsyncEpic(async msg$ => {
 
     return msg$.pipe(
         ofType('user-connected'),
-        mergeMap(async ({user}) => {
+        mergeMap(async ({user, _campaign_id}) => {
             const characters = await db.collection('characters')
-                                       .find({roll: {$exists: true}})
+                                       .find({
+                                           roll: {$exists: true},
+                                           campaign_id: ObjectId(_campaign_id)
+                                       })
                                        .toArray();
             return characters
                 .filter(({roll}) => roll != null)
                 .map(({_id, name, icon_url, roll}) => ({
                     type:         'roll-updated',
                     _for:         [user._id],
+                    _campaign_id,
                     character_id: _id,
                     roll:         {
                         ...roll,
@@ -316,10 +344,22 @@ registerAsyncEpic(async msg$ => {
 
     return msg$.pipe(
         ofType('set-dice', 'clear-roll', 'roll-dice', 'update-result'),
-        mergeMap(async ({type, character_id, key, label, dice, order, source, index, target}) => {
+        mergeMap(async ({
+                            type,
+                            character_id,
+                            key,
+                            label,
+                            dice,
+                            order,
+                            source,
+                            index,
+                            target,
+                            _campaign_id
+                        }) => {
             const _id = ObjectId(character_id);
 
-            const character = await db.collection('characters').findOne({_id});
+            const character = await db.collection('characters')
+                                      .findOne({_id, campaign_id: ObjectId(_campaign_id)});
             if (!character) {
                 return null;
             }
@@ -331,10 +371,10 @@ registerAsyncEpic(async msg$ => {
             if (type === 'clear-roll') {
                 character.roll.dice_pool = {}
             }
-            else if(type === 'roll-dice')
-            {
-                const dice = Object.values(character.roll.dice_pool)
-                                   .flatMap(({dice}) => dice);
+            else if (type === 'roll-dice') {
+                const dice =
+                    Object.values(character.roll.dice_pool)
+                          .flatMap(({dice}) => dice);
 
                 const roll =
                     dice.map(sides => [sides, getRandomInt(sides)])
@@ -363,17 +403,27 @@ registerAsyncEpic(async msg$ => {
             }
 
             if (Object.keys(character.roll.dice_pool).length === 0) {
-                await db.collection('characters').updateOne({_id}, {$unset: {roll: ""}});
+                await db.collection('characters')
+                        .updateOne({
+                            _id,
+                            campaign_id: ObjectId(_campaign_id)
+                        }, {$unset: {roll: ""}});
                 return {
                     type: 'roll-cleared',
+                    _campaign_id,
                     character_id,
                 }
             }
 
-            await db.collection('characters').updateOne({_id}, {$set: {roll: character.roll}});
+            await db.collection('characters')
+                    .updateOne({
+                        _id,
+                        campaign_id: ObjectId(_campaign_id)
+                    }, {$set: {roll: character.roll}});
 
             return {
                 type: 'roll-updated',
+                _campaign_id,
                 character_id,
                 roll: {
                     character_id,

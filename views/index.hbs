@@ -1,10 +1,16 @@
 <div class="grid-container full">
     <div class="grid-x grid-padding-x grid-padding-y">
-        <div class="cell small-full">
-            <div id="react-mount-point"
-                 data-websocket-url="{{ websocket_url }}"
-                 data-campaign="{{json campaign}}"
-            ></div>
-        </div>
+        {{#each campaigns}}
+            <div class="cell small-full">
+                <h2>{{title}}</h2>
+                <pre>{{description}}</pre>
+                <a href="/{{slug}}">Dice Roller</a>
+            </div>
+        {{else}}
+            <div class="cell small-full">
+                No campaigns
+            </div>
+        {{/each}}
+
     </div>
 </div>
